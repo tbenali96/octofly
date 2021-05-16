@@ -18,6 +18,13 @@ def build_features(df_vols):
     df_without_target, deleted_indexes = handle_missing_values(df_without_target)
     df_target = df_target.drop(deleted_indexes).reset_index(drop=True)
 
+    df_without_target["DEPART DE NUIT"] = 0
+    df_without_target.loc[
+        (df_vols['DEPART PROGRAMME'] >= 2300) | (df_without_target['DEPART PROGRAMME'] <= 600), "DEPART DE NUIT"] = 1
+    df_without_target["ARRIVEE DE NUIT"] = 0
+    df_without_target.loc[
+        (df_vols['ARRIVEE PROGRAMMEE'] >= 2300) | (df_without_target['ARRIVEE PROGRAMMEE'] <= 600), "ARRIVEE DE NUIT"] = 1
+
     # Changing format
     df_without_target["ARRIVEE PROGRAMMEE"] = df_without_target["ARRIVEE PROGRAMMEE"].astype(str).apply(
         lambda x: format_hour(x))
@@ -33,7 +40,13 @@ def build_features(df_vols):
     df_without_target['MONTH'] = df_without_target['DATE'].dt.month
     df_without_target['DAY OF THE MONTH'] = df_without_target['DATE'].dt.day
 
-    return df_without_target
+    df_without_target["HEURE DE DEPART"] = df_without_target['DEPART PROGRAMME'].dt.components['hours']
+    df_without_target["HEURE D'ARRIVEE"] = df_without_target['ARRIVEE PROGRAMMEE'].dt.components['hours']
+
+    df_target["RETARD"] = 0
+    df_target.loc[df_target["RETARD A L'ARRIVEE"] > 0, 'RETARD'] = 1
+
+    return df_without_target, df_target
 
 
 def delete_irrelevant_columns(df):
@@ -98,6 +111,13 @@ if __name__ == '__main__':
     vols = pd.read_parquet("../../data/processed/train_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/processed/train_data/prix_fuel.gzip")
     print("Lecture des datasets terminée")
-    vols = build_features(vols)
+    vols, target = build_features(vols)
+    vols = vols.drop(columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
+    print("Création du jeu d'entraînement ...")
+    vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
+    target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
+    print("Fin")
+
+
 
 
