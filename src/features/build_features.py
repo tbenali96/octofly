@@ -23,7 +23,8 @@ def build_features(df_vols):
         (df_vols['DEPART PROGRAMME'] >= 2300) | (df_without_target['DEPART PROGRAMME'] <= 600), "DEPART DE NUIT"] = 1
     df_without_target["ARRIVEE DE NUIT"] = 0
     df_without_target.loc[
-        (df_vols['ARRIVEE PROGRAMMEE'] >= 2300) | (df_without_target['ARRIVEE PROGRAMMEE'] <= 600), "ARRIVEE DE NUIT"] = 1
+        (df_vols['ARRIVEE PROGRAMMEE'] >= 2300) | (
+                    df_without_target['ARRIVEE PROGRAMMEE'] <= 600), "ARRIVEE DE NUIT"] = 1
 
     # Changing format
     df_without_target["ARRIVEE PROGRAMMEE"] = df_without_target["ARRIVEE PROGRAMMEE"].astype(str).apply(
@@ -67,7 +68,7 @@ def format_hour(x):
 
 
 def check_weekend(x):
-    return 1 if x>5 else 0
+    return 1 if x > 5 else 0
 
 
 def scale(df):
@@ -80,12 +81,16 @@ def scale(df):
     df['DISTANCE'] = scaler_distance.transform(np.array(df['DISTANCE']).reshape(-1, 1))
 
     scaler_temps_deplacement_decollage = StandardScaler()
-    scaler_temps_deplacement_decollage = scaler_temps_deplacement_decollage.fit(np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
-    df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE'] = scaler_temps_deplacement_decollage.transform(np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
+    scaler_temps_deplacement_decollage = scaler_temps_deplacement_decollage.fit(
+        np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
+    df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE'] = scaler_temps_deplacement_decollage.transform(
+        np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
 
     scaler_temps_deplacement_atterrissage = StandardScaler()
-    scaler_temps_deplacement_atterrissage = scaler_temps_deplacement_atterrissage.fit(np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
-    df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"] = scaler_temps_deplacement_atterrissage.transform(np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
+    scaler_temps_deplacement_atterrissage = scaler_temps_deplacement_atterrissage.fit(
+        np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
+    df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"] = scaler_temps_deplacement_atterrissage.transform(
+        np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
 
     scaler_nombre_passagers = StandardScaler()
     scaler_nombre_passagers = scaler_nombre_passagers.fit(np.array(df["NOMBRE DE PASSAGERS"]).reshape(-1, 1))
@@ -97,7 +102,8 @@ def scale(df):
 def format_date(df_vols, df_fuel):
     period_of_flights = df_vols['DATE'].max() - df_vols['DATE'].min()
     scaler = MinMaxScaler()
-    df_fuel["DATE"] = (scaler.fit_transform(np.array(df_fuel["DATE"]).reshape(-1, 1))*period_of_flights.days).astype(int)
+    df_fuel["DATE"] = (scaler.fit_transform(np.array(df_fuel["DATE"]).reshape(-1, 1)) * period_of_flights.days).astype(
+        int)
     df_fuel['DATE FORMATTE'] = df_fuel.apply(lambda x: calculate_date(x, df_vols['DATE'].min()), axis=1)
     return df_fuel.drop(columns="DATE")
 
@@ -117,7 +123,3 @@ if __name__ == '__main__':
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
     print("Fin")
-
-
-
-
