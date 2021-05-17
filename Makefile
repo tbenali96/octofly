@@ -1,3 +1,6 @@
+test:
+	poetry run pytest tests --cov=octofly  --cov-fail-under=60
+
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
 
 #################################################################################

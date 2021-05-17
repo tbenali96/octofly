@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.features.build_features import delete_irrelevant_columns
+from src.features.feature_engineering import delete_irrelevant_columns, handle_missing_values
 
 
 def test_delete_irrelevant_columns_doit_renvoyer_le_dataset_d_entrainement_sans_la_colonne_niveau_de_securite():
