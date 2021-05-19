@@ -1,6 +1,17 @@
 test:
 	poetry run pytest tests --cov=octofly  --cov-fail-under=60
 
+test_syntax:
+	poetry run flake8
+	poetry run mypy src --no-incremental
+
+doc:
+	poetry run pdoc
+
+
+
+
+
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
 
 #################################################################################
