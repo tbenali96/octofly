@@ -1,7 +1,13 @@
+from typing import List, Tuple
+
 import pandas as pd
 import numpy as np
 from datetime import timedelta
+import datetime
+
+from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import os
 
 target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "HEURE D'ARRIVEE", "HEURE DE DEPART", "RAISON D'ANNULATION",
@@ -9,8 +15,14 @@ target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "RETARD METEO", "RETARD SECURITE", "RETARD SYSTEM", "RETART DE DEPART",
                   "TEMPS DE VOL", "TEMPS PASSE"]
 
+list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE',
+                          "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS"]
 
-def build_features(df_vols):
+scaler_path = os.getcwd() + '/../../models/train_features_scalers'
+
+
+def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str = scaler_path) -> Tuple[
+    pd.DataFrame, pd.DataFrame]:
     # Drop irrelevant columns and handling missing values
     df_vols = delete_irrelevant_columns(df_vols)
     df_target = df_vols[target_columns]
@@ -18,84 +30,111 @@ def build_features(df_vols):
     df_without_target, deleted_indexes = handle_missing_values(df_without_target)
     df_target = df_target.drop(deleted_indexes).reset_index(drop=True)
 
-    df_without_target["DEPART DE NUIT"] = 0
-    df_without_target.loc[
-        (df_vols['DEPART PROGRAMME'] >= 2300) | (df_without_target['DEPART PROGRAMME'] <= 600), "DEPART DE NUIT"] = 1
-    df_without_target["ARRIVEE DE NUIT"] = 0
-    df_without_target.loc[
-        (df_vols['ARRIVEE PROGRAMMEE'] >= 2300) | (
-                    df_without_target['ARRIVEE PROGRAMMEE'] <= 600), "ARRIVEE DE NUIT"] = 1
+    add_night_flight_binary_features(df_without_target)
+    change_hour_format(df_without_target)
 
-    # Changing format
+    # Scaling
+    df_without_target = scale_features(df_without_target, features_to_scale, path=path_for_scaler,
+                                       is_train_dataset=True)
+
+    df_without_target = extracting_time_features_from_date(df_without_target)
+    # Create RETARD binary target
+    add_delay_binary_target(df_target)
+    df_without_target = df_without_target.drop(
+        columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
+    return df_without_target, df_target
+
+
+def add_night_flight_binary_features(df_without_target: pd.DataFrame):
+    create_is_night_flight_feature('DEPART PROGRAMME', "DEPART DE NUIT", df_without_target)
+    create_is_night_flight_feature('ARRIVEE PROGRAMMEE', "ARRIVEE DE NUIT", df_without_target)
+
+
+def create_is_night_flight_feature(feature: str, is_night_flight_feature: str, df_without_target: pd.DataFrame):
+    df_without_target[is_night_flight_feature] = 0
+    df_without_target.loc[
+        (df_without_target[feature] >= 2300) | (
+                df_without_target[feature] <= 600), is_night_flight_feature] = 1
+    return df_without_target
+
+
+def change_hour_format(df_without_target: pd.DataFrame):
     df_without_target["ARRIVEE PROGRAMMEE"] = df_without_target["ARRIVEE PROGRAMMEE"].astype(str).apply(
         lambda x: format_hour(x))
     df_without_target["DEPART PROGRAMME"] = df_without_target["DEPART PROGRAMME"].astype(str).apply(
         lambda x: format_hour(x))
 
-    # Scaling
-    df_without_target = scale(df_without_target)
 
-    # Extracting data from date
+def add_delay_binary_target(df_target: pd.DataFrame):
+    df_target["RETARD"] = 0
+    df_target.loc[df_target["RETARD A L'ARRIVEE"] > 0, 'RETARD'] = 1
+
+
+def extracting_time_features_from_date(df_without_target: pd.DataFrame):
     df_without_target['DAY OF THE WEEK'] = df_without_target['DATE'].dt.dayofweek + 1
     df_without_target['WEEKEND'] = df_without_target['DAY OF THE WEEK'].apply(lambda x: check_weekend(x))
     df_without_target['MONTH'] = df_without_target['DATE'].dt.month
     df_without_target['DAY OF THE MONTH'] = df_without_target['DATE'].dt.day
-
-    df_without_target["HEURE DE DEPART"] = df_without_target['DEPART PROGRAMME'].dt.components['hours']
-    df_without_target["HEURE D'ARRIVEE"] = df_without_target['ARRIVEE PROGRAMMEE'].dt.components['hours']
-
-    df_target["RETARD"] = 0
-    df_target.loc[df_target["RETARD A L'ARRIVEE"] > 0, 'RETARD'] = 1
-
-    return df_without_target, df_target
+    df_without_target["HEURE DE DEPART"] = df_without_target['DEPART PROGRAMME'].apply(
+        lambda x: convert_time_into_datetime(x).hour)
+    df_without_target["HEURE D'ARRIVEE"] = df_without_target['ARRIVEE PROGRAMMEE'].apply(
+        lambda x: convert_time_into_datetime(x).hour)
+    return df_without_target
 
 
-def delete_irrelevant_columns(df):
+def delete_irrelevant_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=["NIVEAU DE SECURITE"])
 
 
-def handle_missing_values(df):
+def handle_missing_values(df: pd.DataFrame):
     indexes = df.index
     df = df.dropna()
     deleted_indexes = indexes.difference(df.index)
     return df.reset_index(drop=True), deleted_indexes
 
 
-def format_hour(x):
+def format_hour(x: str) -> pd.to_timedelta:
     while len(x) < 4:
         x = '0' + x
     return pd.to_timedelta(x[:-2] + ':' + x[-2:] + ':00')
 
 
-def check_weekend(x):
+def convert_time_into_datetime(time_val):
+    if pd.isnull(time_val):
+        return np.nan
+    else:
+        if time_val == 2400: time_val = 0
+        time_val = "{0:04d}".format(int(time_val))  # transform : 0612
+        time_formatted = datetime.time(int(time_val[0:2]), int(time_val[2:4]))
+    return time_formatted
+
+
+def check_weekend(x: int) -> int:
     return 1 if x > 5 else 0
 
 
-def scale(df):
-    scaler_temps_programme = StandardScaler()
-    scaler_temps_programme = scaler_temps_programme.fit(np.array(df['TEMPS PROGRAMME']).reshape(-1, 1))
-    df['TEMPS PROGRAMME'] = scaler_temps_programme.transform(np.array(df['TEMPS PROGRAMME']).reshape(-1, 1))
+def save_scaler(sc: StandardScaler, path: str, feature: str):
+    dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
 
-    scaler_distance = StandardScaler()
-    scaler_distance = scaler_distance.fit(np.array(df['DISTANCE']).reshape(-1, 1))
-    df['DISTANCE'] = scaler_distance.transform(np.array(df['DISTANCE']).reshape(-1, 1))
 
-    scaler_temps_deplacement_decollage = StandardScaler()
-    scaler_temps_deplacement_decollage = scaler_temps_deplacement_decollage.fit(
-        np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
-    df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE'] = scaler_temps_deplacement_decollage.transform(
-        np.array(df['TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE']).reshape(-1, 1))
+def load_scaler(path: str, feature: str):
+    return load(path + f'/{feature}_std_scaler.bin')
 
-    scaler_temps_deplacement_atterrissage = StandardScaler()
-    scaler_temps_deplacement_atterrissage = scaler_temps_deplacement_atterrissage.fit(
-        np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
-    df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"] = scaler_temps_deplacement_atterrissage.transform(
-        np.array(df["TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE"]).reshape(-1, 1))
 
-    scaler_nombre_passagers = StandardScaler()
-    scaler_nombre_passagers = scaler_nombre_passagers.fit(np.array(df["NOMBRE DE PASSAGERS"]).reshape(-1, 1))
-    df["NOMBRE DE PASSAGERS"] = scaler_nombre_passagers.transform(np.array(df["NOMBRE DE PASSAGERS"]).reshape(-1, 1))
+def scale_feature_in_df(df: pd.DataFrame, feature: str, path: str, is_train_dataset: bool = True) -> pd.Series:
+    if is_train_dataset:
+        scaler_feature = StandardScaler()
+        scaler_feature = scaler_feature.fit(np.array(df[feature]).reshape(-1, 1))
+        save_scaler(scaler_feature, path, feature)
+    else:
+        scaler_feature = load_scaler(path, feature)
+    return scaler_feature.transform(np.array(df[feature]).reshape(-1, 1))
 
+
+def scale_features(df: pd.DataFrame, features_to_scale: List[str], path: str,
+                   is_train_dataset: bool = True) -> pd.DataFrame:
+    for feature in features_to_scale:
+        df[feature] = scale_feature_in_df(df, feature, path, is_train_dataset)
     return df
 
 
@@ -112,14 +151,15 @@ def calculate_date(x, first_date):
     return first_date + timedelta(days=int(x['DATE']))
 
 
-if __name__ == '__main__':
+def main():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     vols = pd.read_parquet("../../data/processed/train_data/vols.gzip")
-    prix_fuel = pd.read_parquet("../../data/processed/train_data/prix_fuel.gzip")
-    print("Lecture des datasets terminée")
-    vols, target = build_features(vols)
-    vols = vols.drop(columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
+    vols, target = build_features(vols, list_features_to_scale)
     print("Création du jeu d'entraînement ...")
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
     print("Fin")
+
+
+if __name__ == '__main__':
+    main()
