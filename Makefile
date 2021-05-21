@@ -8,7 +8,8 @@ test_syntax:
 doc:
 	poetry run pdoc -p 8081
 
-
+app:
+	streamlit run src/visualization/app.py
 
 
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
