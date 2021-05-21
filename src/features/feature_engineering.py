@@ -21,8 +21,11 @@ list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A
 scaler_path = os.getcwd() + '/../../models/train_features_scalers'
 
 
-def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str = scaler_path) -> Tuple[
+def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
+    """
+    function that do the all preprocessing to the dataframe df_vols that will be used for the model
+    """
     # Drop irrelevant columns and handling missing values
     df_vols = delete_irrelevant_columns(df_vols)
     df_target = df_vols[target_columns]
@@ -134,7 +137,7 @@ def scale_feature_in_df(df: pd.DataFrame, feature: str, path: str, is_train_data
 def scale_features(df: pd.DataFrame, features_to_scale: List[str], path: str,
                    is_train_dataset: bool = True) -> pd.DataFrame:
     for feature in features_to_scale:
-        df[feature] = scale_feature_in_df(df, feature, path, is_train_dataset)
+        scale_feature_in_df(df, feature, path, is_train_dataset)
     return df
 
 

@@ -1,13 +1,12 @@
 test:
-	poetry run pytest tests --cov=octofly  --cov-fail-under=60
+	poetry run pytest tests --cov=src  --cov-fail-under=85
 
 test_syntax:
 	poetry run flake8
 	poetry run mypy src --no-incremental
 
 doc:
-	poetry run pdoc
-
+	poetry run pdoc -p 8081
 
 
 
