@@ -23,6 +23,7 @@ pdoc = "^7.0.0"
 pytest-sugar = "^0.9.4"
 streamlit = "^0.82.0"
 awesome-streamlit = "^20200728.1"
+plotly = "^4.14.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
