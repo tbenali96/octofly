@@ -6,7 +6,7 @@ import pandas as pd
 
 def read_database_and_store_in_parquet(input_filepath, output_filepath):
     """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../processed).
+        cleaned data ready to be analyzed (saved in ../parquet_format).
     """
     logger = logging.getLogger(__name__)
     logger.info('Creating data from raw data')
@@ -27,5 +27,5 @@ def read_database_and_store_in_parquet(input_filepath, output_filepath):
 
 
 if __name__ == '__main__':
-    read_database_and_store_in_parquet("../../data/raw/batch_1.db", "../../data/processed/train_data")
-    read_database_and_store_in_parquet("../../data/raw/test.db", "../../data/processed/test_data")
+    read_database_and_store_in_parquet("../../data/raw/batch_1.db", "../../data/parquet_format/train_data")
+    read_database_and_store_in_parquet("../../data/raw/test.db", "../../data/parquet_format/test_data")

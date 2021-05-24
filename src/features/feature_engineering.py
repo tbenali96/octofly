@@ -9,6 +9,8 @@ from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import os
 
+from config import SCALERS_MODEL_PATH
+
 target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "HEURE D'ARRIVEE", "HEURE DE DEPART", "RAISON D'ANNULATION",
                   "RETARD A L'ARRIVEE", "RETARD AVION", "RETARD COMPAGNIE",
@@ -17,8 +19,6 @@ target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
 
 list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE',
                           "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS"]
-
-scaler_path = os.getcwd() + '/../../models/train_features_scalers'
 
 
 def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str) -> Tuple[
@@ -34,15 +34,16 @@ def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for
     df_target = df_target.drop(deleted_indexes).reset_index(drop=True)
 
     add_night_flight_binary_features(df_without_target)
+    df_without_target = extracting_time_features_from_date(df_without_target)
     change_hour_format(df_without_target)
 
     # Scaling
     df_without_target = scale_features(df_without_target, features_to_scale, path=path_for_scaler,
                                        is_train_dataset=True)
 
-    df_without_target = extracting_time_features_from_date(df_without_target)
     # Create RETARD binary target
     add_delay_binary_target(df_target)
+    df_target["CATEGORIE RETARD"] = df_target["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     df_without_target = df_without_target.drop(
         columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
     return df_without_target, df_target
@@ -71,6 +72,15 @@ def change_hour_format(df_without_target: pd.DataFrame):
 def add_delay_binary_target(df_target: pd.DataFrame):
     df_target["RETARD"] = 0
     df_target.loc[df_target["RETARD A L'ARRIVEE"] > 0, 'RETARD'] = 1
+
+
+def add_categorical_delay_target(retard_a_larrivee_du_vol: float):
+    if retard_a_larrivee_du_vol <= 0:
+        return 0
+    elif retard_a_larrivee_du_vol <= 180:
+        return 1
+    else:
+        return 2
 
 
 def extracting_time_features_from_date(df_without_target: pd.DataFrame):
@@ -156,8 +166,8 @@ def calculate_date(x, first_date):
 
 def main():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
-    vols = pd.read_parquet("../../data/processed/train_data/vols.gzip")
-    vols, target = build_features(vols, list_features_to_scale)
+    vols = pd.read_parquet("../../data/parquet_format/train_data/vols.gzip")
+    vols, target = build_features(vols, list_features_to_scale, SCALERS_MODEL_PATH)
     print("Création du jeu d'entraînement ...")
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
