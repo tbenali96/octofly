@@ -6,6 +6,7 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 from joblib import load, dump
+from prefect import task
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import os
 
@@ -213,16 +214,17 @@ def calculate_date(x, first_date):
     return first_date + timedelta(days=int(x['DATE']))
 
 
-def main():
+@task
+def main_feature_engineering():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
     vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", param_retard=10)
     print("Création du jeu d'entraînement ...")
-    vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
-    target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
+    vols.to_parquet("data/processed/train_data/train.gzip", compression='gzip')
+    target.to_parquet("data/processed/train_data/train_target.gzip", compression='gzip')
     print("Fin")
 
 
 if __name__ == '__main__':
-    main()
+    main_feature_engineering()

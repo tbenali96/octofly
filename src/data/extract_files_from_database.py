@@ -2,9 +2,11 @@
 import logging
 import sqlite3
 import pandas as pd
+from prefect import task, Flow
 import os
 
 
+@task
 def read_database_and_store_in_parquet(input_filepath, output_filepath):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../parquet).

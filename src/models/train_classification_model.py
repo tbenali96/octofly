@@ -1,6 +1,9 @@
 import pickle
 import pandas as pd
 from catboost import CatBoostClassifier
+from prefect import Flow
+from prefect import task
+from prefect.engine.executors import DaskExecutor
 
 
 def train_classifier(X, y):
