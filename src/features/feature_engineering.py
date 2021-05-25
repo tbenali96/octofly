@@ -83,6 +83,15 @@ def add_categorical_delay_target(retard_a_larrivee_du_vol: float):
         return 2
 
 
+def get_category_delay_target_in_string(x):
+    if x == 0:
+        return 'on time'
+    elif x == 1:
+        return "delay <= 3h"
+    else:
+        return "delay > 3h"
+
+
 def extracting_time_features_from_date(df_without_target: pd.DataFrame):
     df_without_target['DAY OF THE WEEK'] = df_without_target['DATE'].dt.dayofweek + 1
     df_without_target['WEEKEND'] = df_without_target['DAY OF THE WEEK'].apply(lambda x: check_weekend(x))
