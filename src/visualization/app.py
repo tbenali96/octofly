@@ -13,9 +13,9 @@ if not os.path.exists(DATA_PATH):
     os.mkdir(DATA_PATH)
 
 PAGES = {
-    "Data Visualization and Statistics": data_vizualisation,
-    "Run model": run_predict_model_visualization,
-    "Interpretation and KPIs": show_metrics_and_KPIs,
+    "Visualitation des données (historiques) et statistiques": data_vizualisation,
+    "Modèle Inférence": run_predict_model_visualization,
+    "Interpretation des résultats et KPIs": show_metrics_and_KPIs,
 }
 
 
