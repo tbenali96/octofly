@@ -23,7 +23,7 @@ list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A
 
 
 def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
-                             path_for_scaler: str) -> Tuple[
+                             path_for_scaler: str, param_retard=0) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
     """
     function that do the all preprocessing to the dataframe df_vols that will be used for the model
@@ -44,7 +44,7 @@ def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, featu
                                        is_train_dataset=True)
 
     # Create RETARD binary target
-    add_delay_binary_target(df_target)
+    add_delay_binary_target(df_target, param_retard=param_retard)
     df_target["CATEGORIE RETARD"] = df_target["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     df_without_target = df_without_target.drop(
         columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
@@ -75,9 +75,9 @@ def build_features_for_test(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, featur
 
 
 def build_features(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str,
-                   TRAIN_OR_TEST: string):
+                   TRAIN_OR_TEST: string, param_retard=0):
     if TRAIN_OR_TEST == "TRAIN":
-        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler)
+        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler, param_retard)
     if TRAIN_OR_TEST == "TEST":
         return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler)
 
@@ -109,9 +109,9 @@ def change_hour_format(df_without_target: pd.DataFrame):
         lambda x: format_hour(x))
 
 
-def add_delay_binary_target(df_target: pd.DataFrame):
+def add_delay_binary_target(df_target: pd.DataFrame, param_retard: int = 0):
     df_target["RETARD"] = 0
-    df_target.loc[df_target["RETARD A L'ARRIVEE"] > 0, 'RETARD'] = 1
+    df_target.loc[df_target["RETARD A L'ARRIVEE"] > param_retard, 'RETARD'] = 1
 
 
 def add_categorical_delay_target(retard_a_larrivee_du_vol: float):
@@ -218,7 +218,7 @@ def main():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
-    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN")
+    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", param_retard=0)
     print("Création du jeu d'entraînement ...")
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
