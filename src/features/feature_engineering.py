@@ -1,13 +1,14 @@
+import string
 from typing import List, Tuple
 
 import pandas as pd
 import numpy as np
 from datetime import timedelta
 import datetime
+import os
 
 from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import os
 
 from config import SCALERS_MODEL_PATH
 
@@ -18,22 +19,23 @@ target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "TEMPS DE VOL", "TEMPS PASSE"]
 
 list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE',
-                          "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS"]
+                          "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS", "PRIX DU BARIL"]
 
 
-def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str) -> Tuple[
+def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
+                             path_for_scaler: str) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
     """
     function that do the all preprocessing to the dataframe df_vols that will be used for the model
     """
-    # Drop irrelevant columns and handling missing values
+    df_vols = add_price_fuel(df_vols, df_fuel)
     df_vols = delete_irrelevant_columns(df_vols)
     df_target = df_vols[target_columns]
     df_without_target = df_vols.drop(columns=target_columns)
     df_without_target, deleted_indexes = handle_missing_values(df_without_target)
     df_target = df_target.drop(deleted_indexes).reset_index(drop=True)
 
-    add_night_flight_binary_features(df_without_target)
+    add_night_flight_binary_feature(df_without_target)
     df_without_target = extracting_time_features_from_date(df_without_target)
     change_hour_format(df_without_target)
 
@@ -49,7 +51,45 @@ def build_features(df_vols: pd.DataFrame, features_to_scale: List[str], path_for
     return df_without_target, df_target
 
 
-def add_night_flight_binary_features(df_without_target: pd.DataFrame):
+def build_features_for_test(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
+                            path_for_scaler: str) -> Tuple[
+    pd.DataFrame, pd.DataFrame]:
+    """
+    function that do the all preprocessing to the dataframe df_vols that will be used for the model
+    """
+    df_without_target = add_price_fuel(df_vols, df_fuel)
+    df_without_target = delete_irrelevant_columns(df_without_target)
+    df_without_target, deleted_indexes = handle_missing_values(df_without_target)
+    add_night_flight_binary_feature(df_without_target)
+    df_without_target = extracting_time_features_from_date(df_without_target)
+    change_hour_format(df_without_target)
+
+    # Scaling
+    df_without_target = scale_features(df_without_target, features_to_scale, path=path_for_scaler,
+                                       is_train_dataset=False)
+
+    # Create RETARD binary target
+    df_without_target = df_without_target.drop(
+        columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
+    return df_without_target
+
+
+def build_features(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str,
+                   TRAIN_OR_TEST: string):
+    if TRAIN_OR_TEST == "TRAIN":
+        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler)
+    if TRAIN_OR_TEST == "TEST":
+        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler)
+
+
+def add_price_fuel(df_vols: pd.DataFrame, df_fuel: pd.DataFrame):
+    df_fuel["DATE"] = pd.to_datetime(df_fuel["DATE"])
+    df_vols = pd.merge(df_vols, df_fuel, on="DATE", how="left")
+    df_vols["PRIX DU BARIL"] = df_vols["PRIX DU BARIL"].fillna(df_vols["PRIX DU BARIL"].mean())
+    return df_vols
+
+
+def add_night_flight_binary_feature(df_without_target: pd.DataFrame):
     create_is_night_flight_feature('DEPART PROGRAMME', "DEPART DE NUIT", df_without_target)
     create_is_night_flight_feature('ARRIVEE PROGRAMMEE', "ARRIVEE DE NUIT", df_without_target)
 
@@ -136,7 +176,8 @@ def check_weekend(x: int) -> int:
 
 
 def save_scaler(sc: StandardScaler, path: str, feature: str):
-    dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
+    with open(path + f'/{feature}_std_scaler.bin', 'wb') as f:
+        dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
 
 
 def load_scaler(path: str, feature: str):
@@ -175,8 +216,9 @@ def calculate_date(x, first_date):
 
 def main():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
-    vols = pd.read_parquet("../../data/parquet_format/train_data/vols.gzip")
-    vols, target = build_features(vols, list_features_to_scale, SCALERS_MODEL_PATH)
+    vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
+    prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
+    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN")
     print("Création du jeu d'entraînement ...")
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
