@@ -14,7 +14,7 @@ def predict(X, model_file_name) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    vols = pd.read_parquet("../../data/processed/test_data/vols.gzip")
+    vols = pd.read_parquet("../../data/extracted/test_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
     vols = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TEST")
     preds = predict(vols, "../../models/model_prediction.sav")

@@ -79,7 +79,7 @@ def build_features(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_sca
     if TRAIN_OR_TEST == "TRAIN":
         return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler, param_retard)
     if TRAIN_OR_TEST == "TEST":
-        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler)
+        return build_features_for_test(df_vols, df_fuel, features_to_scale, path_for_scaler)
 
 
 def add_price_fuel(df_vols: pd.DataFrame, df_fuel: pd.DataFrame):
