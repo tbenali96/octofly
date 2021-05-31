@@ -107,8 +107,8 @@ def plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols: 
         "que les aéroport qui ont beaucoup de vols (ceux tout à gauche)")
 
 
-def plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed,
-                                                                                            feature='AEROPORT ARRIVEE'):
+def plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed: pd.DataFrame,
+                                                                                            feature: str='AEROPORT ARRIVEE'):
     fig1 = px.bar(df_processed, x=feature, y=["VOL A l'HEURE", 'RETARD'],
                   title=f"Repartition des vols à l'heure et des vols en retard par {feature}")
     fig2 = px.bar(df_processed,
