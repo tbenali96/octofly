@@ -4,7 +4,7 @@ from src.visualization.data_viz_components.data_viz_and_stats import get_vols_da
 
 
 def write():
-    st.header("PAGE SUR LA VISUALISATION DES DONNÉES ET STATISTIQUES")
+    st.header("")
     st.subheader("1. Informations relatives aux compagnies aériennes")
     df_vols = get_vols_dataframe_with_target_defined()
     add_selectbox = st.sidebar.selectbox(

@@ -23,9 +23,9 @@ def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols):
 
 def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols):
     df_vols_avec_retard = df_vols[df_vols["RETARD A L'ARRIVEE"] > 0].reset_index(drop=True)
-    df_vols_avec_retard['Category retard str'] = df_vols_avec_retard['CATEGORIE RETARD'].map(
-        lambda x: "delay <= 3h" if x == 1 else "delay > 3h")
-    fig = px.histogram(df_vols_avec_retard, x="DISTANCE", nbins=100, color="Category retard str",
+    df_vols_avec_retard['RETARD PAR CATEGORIE'] = df_vols_avec_retard['CATEGORIE RETARD'].map(
+        lambda x: "retard <= 3h" if x == 1 else "retard > 3h")
+    fig = px.histogram(df_vols_avec_retard, x="DISTANCE", nbins=100, color="RETARD PAR CATEGORIE",
                        labels={"CATEGORIE RETARD": "CATEGORY DELAY"},
                        title="Répartition des vols en retard par rapport à la distance parcourue (vue avec histogramme)")
     st.plotly_chart(fig)

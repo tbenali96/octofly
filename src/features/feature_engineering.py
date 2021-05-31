@@ -124,11 +124,11 @@ def add_categorical_delay_target(retard_a_larrivee_du_vol: float):
 
 def get_category_delay_target_in_string(x):
     if x == 0:
-        return 'on time'
+        return "A l'heure"
     elif x == 1:
-        return "delay <= 3h"
+        return "Retard <= 3h"
     else:
-        return "delay > 3h"
+        return "Retard > 3h"
 
 
 def extracting_time_features_from_date(df_without_target: pd.DataFrame):
