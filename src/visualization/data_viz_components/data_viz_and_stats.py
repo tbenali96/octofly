@@ -7,21 +7,21 @@ from src.features.feature_engineering import add_delay_binary_target, add_catego
     get_category_delay_target_in_string, convert_time_into_datetime
 
 
-def get_vols_dataframe_with_target_defined():
+def get_vols_dataframe_with_target_defined()->pd.DataFrame:
     df_vols = pd.read_parquet(DATA_PATH + "/parquet_format/train_data/vols.gzip")
     add_delay_binary_target(df_vols)
     df_vols["CATEGORIE RETARD"] = df_vols["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     return df_vols
 
 
-def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols):
+def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):
     df_vols_avec_retard = df_vols[df_vols["RETARD A L'ARRIVEE"] > 0].reset_index(drop=True)
     fig = px.scatter(df_vols_avec_retard, x="DISTANCE", y="RETARD A L'ARRIVEE",
                      title="Répartition des vols en retard par rapport à la distance parcourue")
     st.plotly_chart(fig)
 
 
-def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols):
+def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):
     df_vols_avec_retard = df_vols[df_vols["RETARD A L'ARRIVEE"] > 0].reset_index(drop=True)
     df_vols_avec_retard['RETARD PAR CATEGORIE'] = df_vols_avec_retard['CATEGORIE RETARD'].map(
         lambda x: "retard <= 3h" if x == 1 else "retard > 3h")
@@ -33,7 +33,7 @@ def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols):
         "Nous pouvons remarquer sur ce graphe que la plupart des vols en retard concernent les vols à faibles distances")
 
 
-def get_pie_chart_that_display_the_category_delay_distribution(df_vols):
+def get_pie_chart_that_display_the_category_delay_distribution(df_vols: pd.DataFrame):
     df_vols_avec_retard_wth_count = df_vols[['CATEGORIE RETARD']]
     df_vols_avec_retard_wth_count['count'] = 1
     df_vols_avec_retard_wth_count_gb = df_vols_avec_retard_wth_count.groupby(['CATEGORIE RETARD'], as_index=False).sum()
