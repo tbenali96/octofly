@@ -12,3 +12,4 @@ fastparquet
 pyarrow>=0.13
 catboost
 prefect
+lightgbm

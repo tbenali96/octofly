@@ -1,16 +1,15 @@
+import datetime
 import string
+from datetime import timedelta
 from typing import List, Tuple
 
-import pandas as pd
 import numpy as np
-from datetime import timedelta
-import datetime
-import os
-
+import pandas as pd
 from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import os
 
-from config import SCALERS_MODEL_PATH
+SCALERS_MODEL_PATH = os.path.join("models/train_features_scalers")
 
 target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "HEURE D'ARRIVEE", "HEURE DE DEPART", "RAISON D'ANNULATION",
@@ -218,7 +217,7 @@ def main():
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
-    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", param_retard=0)
+    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", param_retard=10)
     print("Création du jeu d'entraînement ...")
     vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
