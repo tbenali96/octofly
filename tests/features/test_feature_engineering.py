@@ -8,7 +8,7 @@ from pandas._testing import assert_series_equal, assert_frame_equal
 
 from src.features.feature_engineering import delete_irrelevant_columns, scale_features, scale_feature_in_df, \
     create_is_night_flight_feature, format_hour, convert_time_into_datetime, change_hour_format, \
-    add_night_flight_binary_features, add_delay_binary_target, extracting_time_features_from_date, \
+    add_night_flight_binary_feature, add_delay_binary_target, extracting_time_features_from_date, \
     handle_missing_values, check_weekend, add_categorical_delay_target
 
 TESTED_MODULE = 'src.features.feature_engineering'
@@ -148,7 +148,7 @@ def test_add_night_flight_binary_features__apply_twice_create_is_night_flight_fe
                                                             'ARRIVEE PROGRAMMEE': [490, 1045],
                                                             'DEPART DE NUIT': [0, 1]})
     # When
-    add_night_flight_binary_features(df)
+    add_night_flight_binary_feature(df)
 
     # Then
     m_create_bool_night_flight.assert_any_call(feature1, is_night_flight_feature1, df)
