@@ -7,7 +7,7 @@ from src.features.feature_engineering import add_delay_binary_target, add_catego
     get_category_delay_target_in_string, convert_time_into_datetime
 
 
-def get_vols_dataframe_with_target_defined()->pd.DataFrame:
+def get_vols_dataframe_with_target_defined() -> pd.DataFrame:
     df_vols = pd.read_parquet(DATA_PATH + "/parquet_format/train_data/vols.gzip")
     add_delay_binary_target(df_vols)
     df_vols["CATEGORIE RETARD"] = df_vols["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
@@ -108,7 +108,7 @@ def plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols: 
 
 
 def plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed: pd.DataFrame,
-                                                                                            feature: str='AEROPORT ARRIVEE'):
+                                                                                            feature: str = 'AEROPORT ARRIVEE'):
     fig1 = px.bar(df_processed, x=feature, y=["VOL A l'HEURE", 'RETARD'],
                   title=f"Repartition des vols à l'heure et des vols en retard par {feature}")
     fig2 = px.bar(df_processed,
@@ -147,7 +147,6 @@ def get_bar_plot_that_give_the_mean_number_of_delay_given_the_number_of_passager
 
 
 def get_bar_chart_with_the_delay_type_cumuluated_by_airline(df_vols: pd.DataFrame, time_cumulated: bool = True):
-
     delay_type = ['RETARD SYSTEM', 'RETARD SECURITE',
                   'RETARD COMPAGNIE', 'RETARD AVION', 'RETARD METEO']
     bool_delay_type = ['is_' + delay for delay in delay_type]

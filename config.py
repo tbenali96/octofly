@@ -1,6 +1,7 @@
 import os
 
-directory = "octofly"
+#directory = "octofly"
+directory = os.getcwd()
 
 MODEL_PATH = os.path.join(directory, "models")
 DATA_PATH = os.path.join(directory, "data")
