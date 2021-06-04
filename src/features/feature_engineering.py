@@ -22,6 +22,7 @@ list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A
                           "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS", "PRIX DU BARIL"]
 
 
+#FIXME Ajouter des typehinting
 def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
                              path_for_scaler: str, param_retard=0) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
@@ -216,6 +217,7 @@ def calculate_date(x, first_date):
 
 @task
 def main_feature_engineering():
+    #FIXME metrre le nom des variables en anglais
     print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
     prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")

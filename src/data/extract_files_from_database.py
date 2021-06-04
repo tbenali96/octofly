@@ -14,6 +14,7 @@ def read_database_and_store_in_parquet(input_filepath, output_filepath):
     if not os.path.exists(output_filepath):
         os.makedirs(output_filepath)
     logger = logging.getLogger(__name__)
+    #FIXME Choisir soit l'anglais soit le français
     logger.info('Creating data from raw data')
     con = sqlite3.connect(input_filepath)
     cursor = con.cursor()
@@ -21,6 +22,8 @@ def read_database_and_store_in_parquet(input_filepath, output_filepath):
     tables = cursor.fetchall()
     for table in tables:
         for name in table:
+            #FIXME Remplacer les print par des logging
+            #FIXME Utiliser des f string au lieu de str
             print("Extraction des données de la table " + str(name) + " ...")
             if name == "vols":
                 df = pd.read_sql_query("SELECT * from " + str(name), con, parse_dates=['DATE'])
