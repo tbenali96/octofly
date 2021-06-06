@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.visualization.data_viz_components.data_viz_and_stats import get_vols_dataframe_with_target_defined, \
+from src.app_visualization.data_viz_components.data_viz_and_stats import get_vols_dataframe_with_target_defined, \
     get_scatter_plot_delay_at_arrival_wrt_distance, get_histogram_nbins100_plot_delay_at_arrival_wrt_distance, \
     get_pie_chart_that_display_the_category_delay_distribution, \
     plot_bar_of_number_of_delay_and_on_time_flight_per_airline, \

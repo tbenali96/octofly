@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.visualization.data_viz_components.data_viz_and_stats import get_vols_dataframe_with_target_defined
+from src.app_visualization.data_viz_components.data_viz_and_stats import get_vols_dataframe_with_target_defined
 
 
 def write():
