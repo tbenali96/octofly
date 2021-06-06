@@ -4,7 +4,7 @@ import pandas as pd
 import lightgbm as lgb
 
 
-def train_regressor(X, y):
+def train_regressor(X: pd.DataFrame, y: pd.DataFrame) -> lgb.LGBMRegressor:
     y_late = y[y["RETARD"] == 1]
     y_late = y_late[["RETARD A L'ARRIVEE"]]
     indexes_retard = y_late.index

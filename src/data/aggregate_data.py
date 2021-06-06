@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import os
 
-def aggregate_data(input_filepath, output_filepath):
+def aggregate_data(input_filepath: str, output_filepath: str) -> None:
     """ Aggregates all the tables from the different batches.
     """
     if not os.path.exists(output_filepath):
@@ -22,7 +22,7 @@ def aggregate_data(input_filepath, output_filepath):
     df_fuel.to_parquet(output_filepath + "/prix_fuel.gzip", compression='gzip')
 
 
-def concat_dataframes(df1, df2):
+def concat_dataframes(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     df = pd.concat([df1, df2])
     df = df.drop_duplicates(keep="first").reset_index(drop=True)
     return df

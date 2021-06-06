@@ -54,4 +54,10 @@ Project Organization
 
 --------
 
+### Choice of the language used 
+
+- For the variables, the functions and the code in a more general way : English 
+- For the logging messages : French 
+
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

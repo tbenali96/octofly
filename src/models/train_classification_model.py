@@ -4,11 +4,11 @@ import pandas as pd
 from catboost import CatBoostClassifier
 
 
-def train_classifier(X, y):
+def train_classifier(X: pd.DataFrame, y: pd.DataFrame) -> CatBoostClassifier:
     y = y[["RETARD"]]
     cat_features = [0, 1, 6, 11, 13, 14, 15, 16]
     model = CatBoostClassifier(iterations=500,
-                               learning_rate=0.03,
+                               learning_rate=0.05,
                                eval_metric="Recall",
                                depth=10,
                                random_seed=0,
