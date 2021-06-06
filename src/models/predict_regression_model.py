@@ -1,6 +1,7 @@
 import logging
 import pickle
 import pandas as pd
+import streamlit as st
 
 
 def predict_regressor(X: pd.DataFrame, model_file_name: str) -> pd.DataFrame:
@@ -17,9 +18,24 @@ def predict_regressor(X: pd.DataFrame, model_file_name: str) -> pd.DataFrame:
     return X
 
 
-if __name__ == '__main__':
-    predictions_retard = pd.read_parquet("../../data/predictions/predictions_classification.gzip")
+def main_predict_delay(classif_preds_path, reg_preds_path, model_regression_path):
+    predictions_retard = pd.read_parquet(classif_preds_path)
     logging.info("Prédiction des minutes de retard")
-    preds = predict_regressor(predictions_retard, "../../models/model_regression.sav")
-    preds.to_parquet("../../data/predictions/predictions_regression.gzip", compression='gzip')
+    preds = predict_regressor(predictions_retard, model_regression_path)
+    preds.to_parquet(reg_preds_path, compression='gzip')
     logging.info("Fin")
+
+
+def st_main_predict_delay(classif_preds_path, reg_preds_path, model_regression_path):
+    predictions_retard = pd.read_parquet(classif_preds_path)
+    st.text("Prédiction des minutes de retard")
+    preds = predict_regressor(predictions_retard, model_regression_path)
+    preds.to_parquet(reg_preds_path, compression='gzip')
+    st.text("Fin")
+
+
+if __name__ == '__main__':
+    classif_preds_path = "../../data/predictions/predictions_classification.gzip"
+    reg_preds_path = "../../data/predictions/predictions_regression.gzip"
+    model_regression_path = "../../models/model_regression.sav"
+    main_predict_delay(classif_preds_path, reg_preds_path, model_regression_path)
