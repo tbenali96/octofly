@@ -6,9 +6,8 @@ import sqlite3
 import pandas as pd
 from prefect import task
 
-
 @task
-def read_database_and_store_in_parquet(input_filepath, output_filepath):
+def read_database_and_store_in_parquet(input_filepath: str, output_filepath: str) -> None:
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../parquet).
     """
