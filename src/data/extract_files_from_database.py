@@ -7,13 +7,12 @@ import pandas as pd
 from prefect import task
 
 @task
-def read_database_and_store_in_parquet(input_filepath: str, output_filepath: str) -> None:
+def read_database_and_store_in_parquet(input_filepath: str, output_filepath: str):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../parquet).
     """
     if not os.path.exists(output_filepath):
         os.makedirs(output_filepath)
-    #FIXME Choisir soit l'anglais soit le français
     logging.info('Création de données à partir de données bruts')
     con = sqlite3.connect(input_filepath)
     cursor = con.cursor()
@@ -22,12 +21,12 @@ def read_database_and_store_in_parquet(input_filepath: str, output_filepath: str
     for table in tables:
         for name in table:
             #FIXME Utiliser des f string au lieu de str
-            logging.info("Extraction des données de la table " + str(name) + " ...")
+            logging.info(f'Extraction des données de la table {name}...')
             if name == "vols":
-                df = pd.read_sql_query("SELECT * from " + str(name), con, parse_dates=['DATE'])
+                df = pd.read_sql_query(f'SELECT * from  {name}', con, parse_dates=['DATE'])
             else:
-                df = pd.read_sql_query("SELECT * from " + str(name), con)
-            df.to_parquet(output_filepath + "/" + str(name) + '.gzip', compression='gzip')
+                df = pd.read_sql_query(f'SELECT * from  {name}', con)
+            df.to_parquet(f'{output_filepath}/{name}.gzip', compression='gzip')
             logging.info("Fin de l'extraction des données")
     con.close()
 

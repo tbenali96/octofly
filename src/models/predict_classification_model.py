@@ -7,16 +7,17 @@ import os
 list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A TERRE AU DECOLLAGE',
                           "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS", "PRIX DU BARIL"]
 
-SCALERS_MODEL_PATH = os.path.join("../features/models/train_features_scalers")
+SCALERS_MODEL_PATH = os.path.join("../../models/train_features_scalers")
 
-def calculate_prediction(x, threshold):
+
+def calculate_prediction(x: float, threshold: float) -> int:
     if x <= threshold:
         return 0
     else:
         return 1
 
 
-def predict(X, model_file_name, threshold=0.2):
+def predict_classifier(X: pd.DataFrame, model_file_name: str, threshold: float=0.2) -> pd.DataFrame:
     model = pickle.load(open(model_file_name, 'rb'))
     preds_proba = model.predict_proba(X)
     predictions = []
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     logging.info("Construction des features du dataset de test")
     flights = build_features(flights, fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TEST")
     logging.info("Prédiction du retard ou du non-retard")
-    preds = predict(flights, "../../models/model_classification.sav")
+    preds = predict_classifier(flights, "../../models/model_classification.sav")
     preds.to_parquet("../../data/predictions/predictions_classification.gzip", compression='gzip')
     logging.info("Fin")
 

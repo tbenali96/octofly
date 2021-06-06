@@ -9,7 +9,7 @@ import pandas as pd
 from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-SCALERS_MODEL_PATH = os.path.join("models/train_features_scalers")
+SCALERS_MODEL_PATH = os.path.join("../../models/train_features_scalers")
 
 target_columns = ["ANNULATION", "ATTERRISSAGE", "DECOLLAGE", "DETOURNEMENT",
                   "HEURE D'ARRIVEE", "HEURE DE DEPART", "RAISON D'ANNULATION",

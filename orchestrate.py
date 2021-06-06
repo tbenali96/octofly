@@ -7,16 +7,16 @@ from prefect import Flow, task, Parameter
 
 from src.data.extract_files_from_database import read_database_and_store_in_parquet
 from src.features.feature_engineering import build_features, list_features_to_scale
-from src.models.predict_classification_model import predict
-from src.models.predict_regression_model import predict_delay_duration
+from src.models.predict_classification_model import predict_classifier
+from src.models.predict_regression_model import predict_regressor
 from src.data.aggregate_data import concat_dataframes
 from src.models.train_classification_model import train_classifier
 from src.models.train_regression_model import train_regressor
 
-SCALERS_MODEL_PATH = os.path.join("src/features/models/train_features_scalers")
+SCALERS_MODEL_PATH = os.path.join("models/train_features_scalers")
 
 @task
-def aggregate_data(input_filepath, output_filepath):
+def aggregate_data(input_filepath: str, output_filepath: str):
     """ Aggregates all the tables from the different batches.
     """
     if not os.path.exists(output_filepath):
@@ -36,7 +36,7 @@ def aggregate_data(input_filepath, output_filepath):
 
 
 @task
-def main_feature_engineering(delay):
+def main_feature_engineering(delay: int):
     logging.info("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
     flights = pd.read_parquet("data/aggregated_data/vols.gzip")
     fuel = pd.read_parquet("data/aggregated_data/prix_fuel.gzip")
@@ -75,7 +75,7 @@ def main_prediction_classifier():
     logging.info("Construction des features du dataset de test")
     flights = build_features(flights, fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TEST")
     logging.info("Prédiction du retard ou du non-retard")
-    preds = predict(flights, "models/model_classification.sav")
+    preds = predict_classifier(flights, "models/model_classification.sav")
     preds.to_parquet("data/predictions/predictions_classification.gzip", compression='gzip')
     logging.info("Fin")
 
@@ -84,7 +84,7 @@ def main_prediction_classifier():
 def main_prediction_regressor():
     predictions_retard = pd.read_parquet("data/predictions/predictions_classification.gzip")
     logging.info("Prédiction des minutes de retard")
-    preds = predict_delay_duration(predictions_retard, "models/model_regression.sav")
+    preds = predict_regressor(predictions_retard, "models/model_regression.sav")
     preds.to_parquet("data/predictions/predictions_regression.gzip", compression='gzip')
     logging.info("Fin")
 
