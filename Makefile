@@ -9,7 +9,13 @@ doc:
 	poetry run pdoc -p 8081
 
 app:
-	streamlit run src/visualization/app.py
+    streamlit run src/visualization/app.py
+
+start-prefect:
+    prefect backend server
+    prefect server start
+    sleep 45
+    prefect agent start
 
 
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3

@@ -1,4 +1,6 @@
 import datetime
+import logging
+import os
 import string
 from datetime import timedelta
 from typing import List, Tuple
@@ -7,7 +9,6 @@ import numpy as np
 import pandas as pd
 from joblib import load, dump
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import os
 
 SCALERS_MODEL_PATH = os.path.join("models/train_features_scalers")
 
@@ -21,16 +22,17 @@ list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A
                           "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS", "PRIX DU BARIL"]
 
 
-def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
-                             path_for_scaler: str, param_retard=0) -> Tuple[
+#FIXME Ajouter des typehinting
+def build_features_for_train(df_flights: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
+                             path_for_scaler: str, delay_param=0) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
     """
-    function that do the all preprocessing to the dataframe df_vols that will be used for the model
+    function that do the all preprocessing to the dataframe df_flights that will be used for the model
     """
-    df_vols = add_price_fuel(df_vols, df_fuel)
-    df_vols = delete_irrelevant_columns(df_vols)
-    df_target = df_vols[target_columns]
-    df_without_target = df_vols.drop(columns=target_columns)
+    df_flights = add_price_fuel(df_flights, df_fuel)
+    df_flights = delete_irrelevant_columns(df_flights)
+    df_target = df_flights[target_columns]
+    df_without_target = df_flights.drop(columns=target_columns)
     df_without_target, deleted_indexes = handle_missing_values(df_without_target)
     df_target = df_target.drop(deleted_indexes).reset_index(drop=True)
 
@@ -43,20 +45,20 @@ def build_features_for_train(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, featu
                                        is_train_dataset=True)
 
     # Create RETARD binary target
-    add_delay_binary_target(df_target, param_retard=param_retard)
+    add_delay_binary_target(df_target, delay_param=delay_param)
     df_target["CATEGORIE RETARD"] = df_target["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     df_without_target = df_without_target.drop(
         columns=["DEPART PROGRAMME", "ARRIVEE PROGRAMMEE", "IDENTIFIANT", "DATE", "VOL", "CODE AVION"])
     return df_without_target, df_target
 
 
-def build_features_for_test(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
+def build_features_for_test(df_flights: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
                             path_for_scaler: str) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
     """
-    function that do the all preprocessing to the dataframe df_vols that will be used for the model
+    function that do the all preprocessing to the dataframe df_flights that will be used for the model
     """
-    df_without_target = add_price_fuel(df_vols, df_fuel)
+    df_without_target = add_price_fuel(df_flights, df_fuel)
     df_without_target = delete_irrelevant_columns(df_without_target)
     df_without_target, deleted_indexes = handle_missing_values(df_without_target)
     add_night_flight_binary_feature(df_without_target)
@@ -73,19 +75,19 @@ def build_features_for_test(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, featur
     return df_without_target
 
 
-def build_features(df_vols: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str,
-                   TRAIN_OR_TEST: string, param_retard=0):
+def build_features(df_flights: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str], path_for_scaler: str,
+                   TRAIN_OR_TEST: string, delay_param=0):
     if TRAIN_OR_TEST == "TRAIN":
-        return build_features_for_train(df_vols, df_fuel, features_to_scale, path_for_scaler, param_retard)
+        return build_features_for_train(df_flights, df_fuel, features_to_scale, path_for_scaler, delay_param)
     if TRAIN_OR_TEST == "TEST":
-        return build_features_for_test(df_vols, df_fuel, features_to_scale, path_for_scaler)
+        return build_features_for_test(df_flights, df_fuel, features_to_scale, path_for_scaler)
 
 
-def add_price_fuel(df_vols: pd.DataFrame, df_fuel: pd.DataFrame):
+def add_price_fuel(df_flights: pd.DataFrame, df_fuel: pd.DataFrame):
     df_fuel["DATE"] = pd.to_datetime(df_fuel["DATE"])
-    df_vols = pd.merge(df_vols, df_fuel, on="DATE", how="left")
-    df_vols["PRIX DU BARIL"] = df_vols["PRIX DU BARIL"].fillna(df_vols["PRIX DU BARIL"].mean())
-    return df_vols
+    df_flights = pd.merge(df_flights, df_fuel, on="DATE", how="left")
+    df_flights["PRIX DU BARIL"] = df_flights["PRIX DU BARIL"].fillna(df_flights["PRIX DU BARIL"].mean())
+    return df_flights
 
 
 def add_night_flight_binary_feature(df_without_target: pd.DataFrame):
@@ -108,9 +110,9 @@ def change_hour_format(df_without_target: pd.DataFrame):
         lambda x: format_hour(x))
 
 
-def add_delay_binary_target(df_target: pd.DataFrame, param_retard: int = 0):
+def add_delay_binary_target(df_target: pd.DataFrame, delay_param: int = 0):
     df_target["RETARD"] = 0
-    df_target.loc[df_target["RETARD A L'ARRIVEE"] > param_retard, 'RETARD'] = 1
+    df_target.loc[df_target["RETARD A L'ARRIVEE"] > delay_param, 'RETARD'] = 1
 
 
 def add_categorical_delay_target(retard_a_larrivee_du_vol: float):
@@ -175,8 +177,11 @@ def check_weekend(x: int) -> int:
 
 
 def save_scaler(sc: StandardScaler, path: str, feature: str):
-    with open(path + f'/{feature}_std_scaler.bin', 'wb') as f:
+    if os.path.exists(path + f'/{feature}_std_scaler.bin'):
         dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
+    else :
+        with open(path + f'/{feature}_std_scaler.bin', 'x') as f:
+            dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
 
 
 def load_scaler(path: str, feature: str):
@@ -200,12 +205,12 @@ def scale_features(df: pd.DataFrame, features_to_scale: List[str], path: str,
     return df
 
 
-def format_date(df_vols, df_fuel):
-    period_of_flights = df_vols['DATE'].max() - df_vols['DATE'].min()
+def format_date(df_flights, df_fuel):
+    period_of_flights = df_flights['DATE'].max() - df_flights['DATE'].min()
     scaler = MinMaxScaler()
     df_fuel["DATE"] = (scaler.fit_transform(np.array(df_fuel["DATE"]).reshape(-1, 1)) * period_of_flights.days).astype(
         int)
-    df_fuel['DATE FORMATTE'] = df_fuel.apply(lambda x: calculate_date(x, df_vols['DATE'].min()), axis=1)
+    df_fuel['DATE FORMATTE'] = df_fuel.apply(lambda x: calculate_date(x, df_flights['DATE'].min()), axis=1)
     return df_fuel.drop(columns="DATE")
 
 
@@ -213,16 +218,16 @@ def calculate_date(x, first_date):
     return first_date + timedelta(days=int(x['DATE']))
 
 
-def main():
-    print("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
-    vols = pd.read_parquet("../../data/aggregated_data/vols.gzip")
-    prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
-    vols, target = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", param_retard=10)
-    print("Création du jeu d'entraînement ...")
-    vols.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
+def main_feature_engineering():
+    logging.info("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
+    flights = pd.read_parquet("../../data/aggregated_data/vols.gzip")
+    fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
+    flights, target = build_features(flights, fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TRAIN", delay_param=10)
+    logging.info("Création du jeu d'entraînement ...")
+    flights.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
-    print("Fin")
+    logging.info("Fin")
 
 
 if __name__ == '__main__':
-    main()
+    main_feature_engineering()

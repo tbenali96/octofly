@@ -1,3 +1,4 @@
+import logging
 import pickle
 import pandas as pd
 from src.features.feature_engineering import build_features
@@ -27,12 +28,12 @@ def predict(X, model_file_name, threshold=0.2):
 
 
 if __name__ == '__main__':
-    vols = pd.read_parquet("../../data/extracted/test_data/vols.gzip")
-    prix_fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
-    print("Construction des features du dataset de test")
-    vols = build_features(vols, prix_fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TEST")
-    print("Prédiction du retard ou du non-retard")
-    preds = predict(vols, "../../models/model_classification.sav")
+    flights = pd.read_parquet("../../data/extracted/test_data/vols.gzip")
+    fuel = pd.read_parquet("../../data/aggregated_data/prix_fuel.gzip")
+    logging.info("Construction des features du dataset de test")
+    flights = build_features(flights, fuel, list_features_to_scale, SCALERS_MODEL_PATH, "TEST")
+    logging.info("Prédiction du retard ou du non-retard")
+    preds = predict(flights, "../../models/model_classification.sav")
     preds.to_parquet("../../data/predictions/predictions_classification.gzip", compression='gzip')
-    print("Fin")
+    logging.info("Fin")
 
