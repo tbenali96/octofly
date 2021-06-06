@@ -1,10 +1,10 @@
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 
 
-def get_airline_turnover(reg_preds: pd.DataFrame) -> pd.DataFrame:
-    df_compagnies = pd.read_parquet("../../../data/aggregated_data/compagnies.gzip")
+def get_airline_turnover(reg_preds: pd.DataFrame, df_compagnies: pd.DataFrame) -> pd.DataFrame:
     new_prediction_avec_retard = pd.merge(reg_preds,
                                           df_compagnies[['CODE', 'CHIFFRE D AFFAIRE']].rename(
                                               columns={'CODE': 'COMPAGNIE AERIENNE'}),
@@ -42,8 +42,7 @@ def cost_of_delay(pred_vol: pd.Series) -> float:
     return cost
 
 
-def get_airport_delay_cost(prediction_avec_retard: pd.DataFrame) -> pd.DataFrame:
-    df_aeroports = pd.read_parquet("../../../data/aggregated_data/aeroports.gzip")
+def get_airport_delay_cost(prediction_avec_retard: pd.DataFrame, df_aeroports: pd.DataFrame) -> pd.DataFrame:
     prediction_avec_retard = add_cost_10min_delay(df_aeroports, prediction_avec_retard)
     prediction_avec_retard = add_cost_20min_delay(df_aeroports, prediction_avec_retard)
     prediction_avec_retard['COUT DU RETARD'] = prediction_avec_retard.apply(cost_of_delay, axis=1)
@@ -133,10 +132,17 @@ def get_percentage_of_lost_sales(prediction_with_cost_gb_airline: pd.DataFrame) 
     return prediction_with_cost_gb_airline
 
 
-def get_percentage_of_delay_by_company(prediction_with_cost_gb_airline: pd.DataFrame) -> pd.DataFrame:
-    class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
+def get_percentage_of_delay_by_company(prediction_with_cost_gb_airline: pd.DataFrame, class_preds:pd.DataFrame) -> pd.DataFrame:
 
-    return
+    class_preds_with_delay = class_preds[['COMPAGNIE AERIENNE', 'RETARD']].rename(columns={'RETARD': 'NB DE RETARD'})
+    class_preds_with_delay['NB DE VOLS'] = 1
+    flight_gb_airlines = class_preds_with_delay.groupby(['COMPAGNIE AERIENNE'], as_index=False).sum()
+    flight_gb_airlines['POURCENTAGE DE RETARD'] = (flight_gb_airlines['NB DE RETARD'] / flight_gb_airlines[
+        'NB DE VOLS']) * 100
+    prediction_with_cost_gb_airline_with_percentage_of_flight = pd.merge(prediction_with_cost_gb_airline,
+                                                                         flight_gb_airlines, on='COMPAGNIE AERIENNE',
+                                                                         how='left')
+    return prediction_with_cost_gb_airline_with_percentage_of_flight
 
 
 def plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline: pd.DataFrame):
@@ -145,7 +151,7 @@ def plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_a
                  y=["CHIFFRE D AFFAIRE", "TOTAL A PAYER"],
                  barmode='group',
                  title="Repartition du Chiffre d'affaire et cout total du retard par Compagnie")
-    fig.show()
+    st.plotly_chart(fig)
 
 
 def plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline: pd.DataFrame):
@@ -154,7 +160,7 @@ def plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_air
                  y=["CHIFFRE D AFFAIRE", "NV CHIFFRE D'AFFAIRE"],
                  barmode='group',
                  title="Repartition du Chiffre d'affaire et cout total du retard par Compagnie")
-    fig.show()
+    st.plotly_chart(fig)
 
 
 def plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline):
@@ -166,14 +172,13 @@ def plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline):
         fig = go.Figure(data=[go.Pie(labels=labels, values=values, pull=[0, 0, 0.2, 0])])
         fig.update_traces(hole=.4, hoverinfo="label+percent+name")
         fig.update_layout(title_text=company)
-        fig.show()
+        st.plotly_chart(fig)
 
 
-def get_prediction_with_all_cost_id_df(prediction_with_delay):
-    reg_preds = pd.read_parquet("../../../data/predictions/predictions_regression.gzip")
-    prediction_with_delay = get_airline_turnover(reg_preds)
+def get_prediction_with_all_cost_id_df(reg_preds, df_compagnies, df_aeroports, class_preds):
+    prediction_with_delay = get_airline_turnover(reg_preds, df_compagnies)
     # Cost of delay by airports
-    prediction_with_delay = get_airport_delay_cost(prediction_with_delay)
+    prediction_with_delay = get_airport_delay_cost(prediction_with_delay, df_aeroports)
 
     # Compensation to clients
     prediction_with_delay = get_number_of_indemnities_asked_and_compensation_due(prediction_with_delay)
@@ -189,7 +194,9 @@ def get_prediction_with_all_cost_id_df(prediction_with_delay):
     # Get total to be paid by airlines
     prediction_with_cost_gb_airline = cost_of_delay_gb_airlines(prediction_with_delay)
     prediction_with_cost_gb_airline = get_total_to_be_paid(prediction_with_cost_gb_airline)
+    prediction_with_cost_gb_airline = get_new_turnover_for_each_airline(prediction_with_cost_gb_airline)
     prediction_with_cost_gb_airline = get_percentage_of_lost_sales(prediction_with_cost_gb_airline)
+    prediction_with_cost_gb_airline = get_percentage_of_delay_by_company(prediction_with_cost_gb_airline, class_preds)
     return reg_preds, prediction_with_cost_gb_airline
 
 
@@ -200,9 +207,13 @@ def save_preds_regression_with_airline_turnover():
 
 
 if __name__ == '__main__':
-    # save_preds_regression_with_airline_turnover()
     reg_preds = pd.read_csv("../../../data/predictions/predictions_regression_with_turnover.csv")
-    reg_preds, prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds)
+    df_compagnies = pd.read_parquet("../../../data/aggregated_data/compagnies.gzip")
+    df_aeroports = pd.read_parquet("../../../data/aggregated_data/aeroports.gzip")
+    class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
+    reg_preds, prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
+                                                                                    df_aeroports, class_preds)
+    print(prediction_with_cost_gb_airline.columns)
     plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline)
     plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline)
     plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline)
