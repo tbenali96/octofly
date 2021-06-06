@@ -1,9 +1,7 @@
 import pickle
+import logging
 import pandas as pd
 from catboost import CatBoostClassifier
-from prefect import Flow
-from prefect import task
-from prefect.engine.executors import DaskExecutor
 
 
 def train_classifier(X, y):
@@ -22,8 +20,8 @@ def train_classifier(X, y):
 if __name__ == '__main__':
     X = pd.read_parquet("../../data/processed/train_data/train.gzip")
     y = pd.read_parquet("../../data/processed/train_data/train_target.gzip")
-    print("Entraînement du modèle de classification")
+    logging.info("Entraînement du modèle de classification")
     model = train_classifier(X, y)
-    print("Fin de l'entraînement")
+    logging.info("Fin de l'entraînement")
     filename = '../../models/model_classification.sav'
     pickle.dump(model, open(filename, 'wb'))
