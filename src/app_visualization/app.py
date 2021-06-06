@@ -5,7 +5,8 @@ import streamlit as st
 import awesome_streamlit as ast
 
 from config import DATA_PATH
-from src.app_visualization.pages import data_vizualisation, run_predict_model_visualization, show_metrics_and_KPIs
+from src.app_visualization.pages import data_vizualisation, run_predict_model_visualization, show_metrics_and_KPIs, \
+    train_model
 
 ast.core.services.other.set_logging_format()
 
@@ -14,6 +15,7 @@ if not os.path.exists(DATA_PATH):
 
 PAGES = {
     "Visualitation des données (historiques) et statistiques": data_vizualisation,
+    "Entrainement du modèle : choix minutes de retard" : train_model,
     "Modèle Inférence": run_predict_model_visualization,
     "Interpretation des résultats et KPIs": show_metrics_and_KPIs,
 }

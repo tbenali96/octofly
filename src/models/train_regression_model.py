@@ -2,6 +2,7 @@ import logging
 import pickle
 import pandas as pd
 import lightgbm as lgb
+import streamlit as st
 
 
 def train_regressor(X: pd.DataFrame, y: pd.DataFrame) -> lgb.LGBMRegressor:
@@ -31,11 +32,28 @@ def train_regressor(X: pd.DataFrame, y: pd.DataFrame) -> lgb.LGBMRegressor:
     return model
 
 
-if __name__ == '__main__':
-    X = pd.read_parquet("../../data/processed/train_data/train.gzip")
-    y = pd.read_parquet("../../data/processed/train_data/train_target.gzip")
+def main_train_regressor_model(X_path, y_path, filename):
+    X = pd.read_parquet(X_path)
+    y = pd.read_parquet(y_path)
     logging.info("Entraînement du modèle de regression")
     model = train_regressor(X, y)
     logging.info("Fin de l'entraînement")
-    filename = '../../models/model_regression.sav'
+
     pickle.dump(model, open(filename, 'wb'))
+
+
+def st_main_train_regressor_model(X_path, y_path, filename):
+    X = pd.read_parquet(X_path)
+    y = pd.read_parquet(y_path)
+    st.text("Entraînement du modèle de regression")
+    model = train_regressor(X, y)
+    st.text("Fin de l'entraînement")
+
+    pickle.dump(model, open(filename, 'wb'))
+
+
+if __name__ == '__main__':
+    X_path = "../../data/processed/train_data/train.gzip"
+    y_path = "../../data/processed/train_data/train_target.gzip"
+    filename = '../../models/model_regression.sav'
+    main_train_regressor_model(X_path, y_path, filename)

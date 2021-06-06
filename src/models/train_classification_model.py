@@ -2,6 +2,7 @@ import pickle
 import logging
 import pandas as pd
 from catboost import CatBoostClassifier
+import streamlit as st
 
 
 def train_classifier(X: pd.DataFrame, y: pd.DataFrame) -> CatBoostClassifier:
@@ -17,11 +18,26 @@ def train_classifier(X: pd.DataFrame, y: pd.DataFrame) -> CatBoostClassifier:
     return model
 
 
-if __name__ == '__main__':
-    X = pd.read_parquet("../../data/processed/train_data/train.gzip")
-    y = pd.read_parquet("../../data/processed/train_data/train_target.gzip")
+def main_training(X_path, y_path, filename):
+    X = pd.read_parquet(X_path)
+    y = pd.read_parquet(y_path)
     logging.info("Entraînement du modèle de classification")
     model = train_classifier(X, y)
     logging.info("Fin de l'entraînement")
-    filename = '../../models/model_classification.sav'
     pickle.dump(model, open(filename, 'wb'))
+
+
+def st_main_training(X_path, y_path, filename):
+    X = pd.read_parquet(X_path)
+    y = pd.read_parquet(y_path)
+    st.text("Entraînement du modèle de classification")
+    model = train_classifier(X, y)
+    st.text("Fin de l'entraînement")
+    pickle.dump(model, open(filename, 'wb'))
+
+
+if __name__ == '__main__':
+    X_path = "../../data/processed/train_data/train.gzip"
+    y_path = "../../data/processed/train_data/train_target.gzip"
+    filename = '../../models/model_classification.sav'
+    main_training(X_path, y_path, filename)
