@@ -3,29 +3,36 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
-def get_ailine_turnover(reg_preds: pd.DataFrame) -> pd.DataFrame:
+def get_airline_turnover(reg_preds: pd.DataFrame) -> pd.DataFrame:
     df_compagnies = pd.read_parquet("../../../data/aggregated_data/compagnies.gzip")
-    reg_preds["CHIFFRE D'AFFAIRE COMPAGNIE"] = reg_preds['COMPAGNIE AERIENNE'].map(
-        lambda x: df_compagnies[df_compagnies['CODE'] == x]['CHIFFRE D AFFAIRE'].values[0])
-    return reg_preds
+    new_prediction_avec_retard = pd.merge(reg_preds,
+                                          df_compagnies[['CODE', 'CHIFFRE D AFFAIRE']].rename(
+                                              columns={'CODE': 'COMPAGNIE AERIENNE'}),
+                                          on='COMPAGNIE AERIENNE', how='left')
+    return new_prediction_avec_retard
 
 
-def add_cost_20min_delay(df_aeroports: pd.DataFrame, airport: str) -> int:
-    twenty_first_min_cost = df_aeroports[
-        df_aeroports['CODE IATA'] == airport]['PRIX RETARD PREMIERE 20 MINUTES'].values[0]
-    return twenty_first_min_cost
+def add_cost_20min_delay(df_aeroports: pd.DataFrame, prediction_avec_retard: pd.DataFrame) -> pd.DataFrame:
+    new_prediction_avec_retard = pd.merge(prediction_avec_retard,
+                                          df_aeroports[['CODE IATA', 'PRIX RETARD PREMIERE 20 MINUTES']].rename(
+                                              columns={'CODE IATA': 'AEROPORT ARRIVEE'}),
+                                          on='AEROPORT ARRIVEE', how='left')
+    return new_prediction_avec_retard
 
 
-def add_cost_10min_delay(df_aeroports: pd.DataFrame, airport: str) -> int:
-    ten_min_delay_cost = df_aeroports[
-        df_aeroports['CODE IATA'] == airport]['PRIS RETARD POUR CHAQUE MINUTE APRES 10 MINUTES'].values[0]
-    return ten_min_delay_cost
+def add_cost_10min_delay(df_aeroports: pd.DataFrame, prediction_avec_retard: pd.DataFrame) -> pd.DataFrame:
+    new_prediction_avec_retard = pd.merge(prediction_avec_retard,
+                                          df_aeroports[
+                                              ['CODE IATA', 'PRIS RETARD POUR CHAQUE MINUTE APRES 10 MINUTES']].rename(
+                                              columns={'CODE IATA': 'AEROPORT ARRIVEE'}),
+                                          on='AEROPORT ARRIVEE', how='left')
+    return new_prediction_avec_retard
 
 
 def cost_of_delay(pred_vol: pd.Series) -> float:
-    delay = pred_vol['RETARD']
+    delay = pred_vol['RETARD MINUTES']
     twenty_first_min_cost = pred_vol['PRIX RETARD PREMIERE 20 MINUTES']
-    ten_min_delay_cost = pred_vol['PRIS RETARD CHAQUE MINUTE APRES 10 MINUTES']
+    ten_min_delay_cost = pred_vol['PRIS RETARD POUR CHAQUE MINUTE APRES 10 MINUTES']
 
     cost = 0
     if delay > 10:
@@ -35,27 +42,17 @@ def cost_of_delay(pred_vol: pd.Series) -> float:
     return cost
 
 
-def get_first_twenty_min_cost_for_airlines(prediction_avec_retard: pd.DataFrame, df_aeroports: pd.DataFrame):
-    prediction_avec_retard['PRIX RETARD PREMIERE 20 MINUTES'] = prediction_avec_retard['AEROPORTS'] \
-        .map(lambda x: add_cost_20min_delay(df_aeroports, x))
-
-
-def get_first_ten_min_cost_for_airlines(prediction_avec_retard: pd.DataFrame, df_aeroports: pd.DataFrame):
-    prediction_avec_retard['PRIX RETARD PREMIERE 20 MINUTES'] = prediction_avec_retard['AEROPORTS'] \
-        .map(lambda x: add_cost_20min_delay(df_aeroports, x))
-
-
 def get_airport_delay_cost(prediction_avec_retard: pd.DataFrame) -> pd.DataFrame:
     df_aeroports = pd.read_parquet("../../../data/aggregated_data/aeroports.gzip")
-    get_first_twenty_min_cost_for_airlines(prediction_avec_retard, df_aeroports)
-    get_first_ten_min_cost_for_airlines(prediction_avec_retard, df_aeroports)
+    prediction_avec_retard = add_cost_10min_delay(df_aeroports, prediction_avec_retard)
+    prediction_avec_retard = add_cost_20min_delay(df_aeroports, prediction_avec_retard)
     prediction_avec_retard['COUT DU RETARD'] = prediction_avec_retard.apply(cost_of_delay, axis=1)
     return prediction_avec_retard.drop(
-        columns=['PRIX RETARD PREMIERE 20 MINUTES', 'PRIS RETARD CHAQUE MINUTE APRES 10 MINUTES'])
+        columns=['PRIX RETARD PREMIERE 20 MINUTES', 'PRIS RETARD POUR CHAQUE MINUTE APRES 10 MINUTES'])
 
 
 def get_number_of_indemnities_asked(pred_vol: pd.Series):
-    delay = pred_vol.loc['RETARD']
+    delay = pred_vol.loc['RETARD MINUTES']
     nb_of_passenger = pred_vol.loc['NOMBRE DE PASSAGERS']
     nb_of_indemnities_asked = 0
     if 10 < delay < 45:
@@ -68,7 +65,7 @@ def get_number_of_indemnities_asked(pred_vol: pd.Series):
 
 
 def compensation_due(pred_vol, ticket_price=300):
-    delay = pred_vol.loc['RETARD']
+    delay = pred_vol.loc['RETARD MINUTES']
     nb_of_indemnities_asked = pred_vol.loc["NOMBRE D'INDEMNITES DEMANDEES"]
     compensation_due_to_clients = 0
     if 10 < delay < 45:
@@ -80,11 +77,12 @@ def compensation_due(pred_vol, ticket_price=300):
     return compensation_due_to_clients
 
 
-def get_number_of_indemnities_asked_and_compensation_due(prediction_avec_retard: pd.DataFrame):
-    prediction_avec_retard[
-        "NOMBRE D'INDEMNITES DEMANDEES"] = prediction_avec_retard.apply(get_number_of_indemnities_asked, axis=1)
-    prediction_avec_retard[
-        "INDEMNITES A PAYER"] = prediction_avec_retard.apply(compensation_due, axis=1)
+def get_number_of_indemnities_asked_and_compensation_due(prediction_with_delay: pd.DataFrame):
+    prediction_with_delay[
+        "NOMBRE D'INDEMNITES DEMANDEES"] = prediction_with_delay.apply(get_number_of_indemnities_asked, axis=1)
+    prediction_with_delay[
+        "INDEMNITES A PAYER"] = prediction_with_delay.apply(compensation_due, axis=1)
+    return prediction_with_delay
 
 
 def get_number_of_lost_customer(delay: float, passenger_nb: int) -> int:
@@ -98,15 +96,15 @@ def get_cost_of_lost_customer(nb_of_lost_customers: int, ticket_price: int = 300
     return flight_frequency * ticket_price * nb_of_lost_customers
 
 
-def cost_of_delay_gb_airlines(prediction_avec_retard: pd.DataFrame):
-    return prediction_avec_retard[["RETARD", 'COMPAGNIE AERIENNE', "CHIFFRE D'AFFAIRE COMPAGNIE",
-                                   "COUT DU RETARD", "INDEMNITES A PAYER",
-                                   "NOMBRE DE CLIENTS PERDUS",
-                                   "COUT DES CLIENTS PERDUS"]] \
+def cost_of_delay_gb_airlines(prediction_with_delay: pd.DataFrame):
+    return prediction_with_delay[["RETARD MINUTES", 'COMPAGNIE AERIENNE', "CHIFFRE D AFFAIRE",
+                                  "COUT DU RETARD", "INDEMNITES A PAYER",
+                                  "NOMBRE DE CLIENTS PERDUS",
+                                  "COUT DES CLIENTS PERDUS"]] \
         .groupby(['COMPAGNIE AERIENNE'], as_index=False) \
         .agg({
-        "RETARD": "count",
-        "CHIFFRE D'AFFAIRE COMPAGNIE": 'first',
+        "RETARD MINUTES": "count",
+        "CHIFFRE D AFFAIRE": 'first',
         "COUT DU RETARD": 'sum',
         "INDEMNITES A PAYER": 'sum',
         "NOMBRE DE CLIENTS PERDUS": "sum",
@@ -114,29 +112,37 @@ def cost_of_delay_gb_airlines(prediction_avec_retard: pd.DataFrame):
     }).rename(columns={"RETARD": "NOMBRE DE RETARD"})
 
 
-def get_total_to_be_paid(prediction_with_cost_gb_airline: pd.DataFrame):
+def get_total_to_be_paid(prediction_with_cost_gb_airline: pd.DataFrame) -> pd.DataFrame:
     prediction_with_cost_gb_airline["TOTAL A PAYER"] = prediction_with_cost_gb_airline["COUT DU RETARD"] \
                                                        + prediction_with_cost_gb_airline["INDEMNITES A PAYER"] \
                                                        + prediction_with_cost_gb_airline["COUT DES CLIENTS PERDUS"]
+    return prediction_with_cost_gb_airline
 
 
-def get_new_turnover_for_each_airline(prediction_with_cost_gb_airline: pd.DataFrame):
+def get_new_turnover_for_each_airline(prediction_with_cost_gb_airline: pd.DataFrame) -> pd.DataFrame:
     prediction_with_cost_gb_airline["NV CHIFFRE D'AFFAIRE"] = prediction_with_cost_gb_airline[
-                                                                  "CHIFFRE D'AFFAIRE COMPAGNIE"] \
+                                                                  "CHIFFRE D AFFAIRE"] \
                                                               - prediction_with_cost_gb_airline["TOTAL A PAYER"]
+    return prediction_with_cost_gb_airline
 
 
-def get_percentage_of_lost_sales(prediction_with_cost_gb_airline: pd.DataFrame):
+def get_percentage_of_lost_sales(prediction_with_cost_gb_airline: pd.DataFrame) -> pd.DataFrame:
     prediction_with_cost_gb_airline["%CHIFFRE D'AFFAIRE LOST"] = (prediction_with_cost_gb_airline["TOTAL A PAYER"] /
                                                                   prediction_with_cost_gb_airline[
-                                                                      "CHIFFRE D'AFFAIRE COMPAGNIE"]) * 100
+                                                                      "CHIFFRE D AFFAIRE"]) * 100
+    return prediction_with_cost_gb_airline
+
+
+def get_percentage_of_delay_by_company(prediction_with_cost_gb_airline: pd.DataFrame) -> pd.DataFrame:
+    class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
+
+    return
 
 
 def plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline: pd.DataFrame):
-    print(prediction_with_cost_gb_airline)
     fig = px.bar(prediction_with_cost_gb_airline,
-                 x="'COMPAGNIE AERIENNE'",
-                 y=["CHIFFRE D'AFFAIRE COMPAGNIE", "TOTAL A PAYER"],
+                 x="COMPAGNIE AERIENNE",
+                 y=["CHIFFRE D AFFAIRE", "TOTAL A PAYER"],
                  barmode='group',
                  title="Repartition du Chiffre d'affaire et cout total du retard par Compagnie")
     fig.show()
@@ -144,28 +150,37 @@ def plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_a
 
 def plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline: pd.DataFrame):
     fig = px.bar(prediction_with_cost_gb_airline,
-                 x="'COMPAGNIE AERIENNE'",
-                 y=["CHIFFRE D'AFFAIRE COMPAGNIE", "NV CHIFFRE D'AFFAIRE"],
+                 x="COMPAGNIE AERIENNE",
+                 y=["CHIFFRE D AFFAIRE", "NV CHIFFRE D'AFFAIRE"],
                  barmode='group',
                  title="Repartition du Chiffre d'affaire et cout total du retard par Compagnie")
     fig.show()
 
 
-def get_prediction_with_all_cost_id_df():
-    reg_preds = pd.read_parquet("../../../data/predictions/predictions_regression.gzip")
-    reg_preds = get_ailine_turnover(reg_preds)
-    print(reg_preds.keys())
-    prediction_with_delay = reg_preds #reg_preds[reg_preds['RETARD'] > 0].copy()
+def plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline):
+    for idx, company in enumerate(prediction_with_cost_gb_airline["COMPAGNIE AERIENNE"]):
+        labels = ["NV CHIFFRE D'AFFAIRE", "TOTAL A PAYER"]
+        values = [prediction_with_cost_gb_airline.iloc[idx]["NV CHIFFRE D'AFFAIRE"],
+                  prediction_with_cost_gb_airline.iloc[idx]["TOTAL A PAYER"]]
 
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, pull=[0, 0, 0.2, 0])])
+        fig.update_traces(hole=.4, hoverinfo="label+percent+name")
+        fig.update_layout(title_text=company)
+        fig.show()
+
+
+def get_prediction_with_all_cost_id_df(prediction_with_delay):
+    reg_preds = pd.read_parquet("../../../data/predictions/predictions_regression.gzip")
+    prediction_with_delay = get_airline_turnover(reg_preds)
     # Cost of delay by airports
-    get_airport_delay_cost(prediction_with_delay)
+    prediction_with_delay = get_airport_delay_cost(prediction_with_delay)
 
     # Compensation to clients
-    get_number_of_indemnities_asked_and_compensation_due(prediction_with_delay)
+    prediction_with_delay = get_number_of_indemnities_asked_and_compensation_due(prediction_with_delay)
 
     # Client loss
     prediction_with_delay['NOMBRE DE CLIENTS PERDUS'] = prediction_with_delay.apply(
-        lambda x: get_number_of_lost_customer(x["RETARD"], x['NOMBRE DE PASSAGERS']), axis=1)
+        lambda x: get_number_of_lost_customer(x["RETARD MINUTES"], x['NOMBRE DE PASSAGERS']), axis=1)
 
     # Get the cost of all the lost clients
     prediction_with_delay['COUT DES CLIENTS PERDUS'] = prediction_with_delay["NOMBRE DE CLIENTS PERDUS"].map(
@@ -173,12 +188,21 @@ def get_prediction_with_all_cost_id_df():
 
     # Get total to be paid by airlines
     prediction_with_cost_gb_airline = cost_of_delay_gb_airlines(prediction_with_delay)
-    get_total_to_be_paid(prediction_with_cost_gb_airline)
-    get_percentage_of_lost_sales(prediction_with_cost_gb_airline)
-    return prediction_with_cost_gb_airline
+    prediction_with_cost_gb_airline = get_total_to_be_paid(prediction_with_cost_gb_airline)
+    prediction_with_cost_gb_airline = get_percentage_of_lost_sales(prediction_with_cost_gb_airline)
+    return reg_preds, prediction_with_cost_gb_airline
+
+
+def save_preds_regression_with_airline_turnover():
+    reg_preds = pd.read_parquet("../../../data/predictions/predictions_regression.gzip")
+    reg_preds = get_airline_turnover(reg_preds)
+    reg_preds.to_csv("../../../data/predictions/predictions_regression_with_turnover.csv", index=False)
 
 
 if __name__ == '__main__':
-    prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df()
+    # save_preds_regression_with_airline_turnover()
+    reg_preds = pd.read_csv("../../../data/predictions/predictions_regression_with_turnover.csv")
+    reg_preds, prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds)
     plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline)
     plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline)
+    plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline)
