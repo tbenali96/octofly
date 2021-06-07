@@ -11,11 +11,15 @@ doc:
 app:
 	streamlit run src/app_visualization/app.py
 
-start-prefect:
+start-prefect-server:
 	prefect backend server
 	prefect server start
-	sleep 45
+
+start-prefect-agent:
 	prefect agent start
+	sleep 45
+	prefect create project "OCTOFLY"
+	python orchestrate.py
 
 
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3

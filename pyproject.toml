@@ -9,6 +9,7 @@ python = "^3.8"
 codecov = "^2.1.11"
 catboost = "^0.26"
 lightgbm = "^3.2.1"
+prefect = "^0.14.21"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
