@@ -323,11 +323,11 @@ def plot_mapping_size_of_airport_wrt_their_delay_and_nb_of_flight(df_vols: pd.Da
 
 def main():
     df_vols = get_vols_dataframe_with_target_defined()
-    # get_scatter_plot_delay_at_arrival_wrt_distance(df_vols)
-    # get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols)
-    # get_pie_chart_that_display_the_category_delay_distribution(df_vols)
-    # plot_bar_of_number_of_delay_and_on_time_flight_per_airline(df_vols)
-    # plot_mean_delay_wrt_night_flight(df_vols)
+    get_scatter_plot_delay_at_arrival_wrt_distance(df_vols)
+    get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols)
+    get_pie_chart_that_display_the_category_delay_distribution(df_vols)
+    plot_bar_of_number_of_delay_and_on_time_flight_per_airline(df_vols)
+    plot_mean_delay_wrt_night_flight(df_vols)
     plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols)
 
 

@@ -5,6 +5,9 @@ import streamlit as st
 
 
 def predict_regressor(X: pd.DataFrame, model_file_name: str) -> pd.DataFrame:
+    """
+    Predicts the delay duration for each record of the test dataset.
+    """
     model = pickle.load(open(model_file_name, 'rb'))
     X = X[X["RETARD"] == 1]
     X = X.drop(columns=["RETARD"])

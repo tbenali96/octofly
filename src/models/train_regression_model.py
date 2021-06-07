@@ -6,6 +6,9 @@ import streamlit as st
 
 
 def train_regressor(X: pd.DataFrame, y: pd.DataFrame) -> lgb.LGBMRegressor:
+    """
+    Extracts the delayed flights only from the training dataset and trains a LGBM Regressor on it.
+    """
     y_late = y[y["RETARD"] == 1]
     y_late = y_late[["RETARD A L'ARRIVEE"]]
     indexes_retard = y_late.index
