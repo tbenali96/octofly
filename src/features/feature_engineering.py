@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import timedelta
 from typing import List, Tuple
+import streamlit as st
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ list_features_to_scale = ['TEMPS PROGRAMME', 'DISTANCE', 'TEMPS DE DEPLACEMENT A
                           "TEMPS DE DEPLACEMENT A TERRE A L'ATTERRISSAGE", "NOMBRE DE PASSAGERS", "PRIX DU BARIL"]
 
 
-#FIXME Ajouter des typehinting
+# FIXME Ajouter des typehinting
 def build_features_for_train(df_flights: pd.DataFrame, df_fuel: pd.DataFrame, features_to_scale: List[str],
                              path_for_scaler: str, delay_param=0) -> Tuple[
     pd.DataFrame, pd.DataFrame]:
@@ -177,7 +178,7 @@ def check_weekend(x: int) -> int:
 def save_scaler(sc: StandardScaler, path: str, feature: str) -> None:
     if os.path.exists(path + f'/{feature}_std_scaler.bin'):
         dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
-    else :
+    else:
         with open(path + f'/{feature}_std_scaler.bin', 'x') as f:
             dump(sc, path + f'/{feature}_std_scaler.bin', compress=True)
 
@@ -225,6 +226,18 @@ def main_feature_engineering(delay):
     flights.to_parquet("../../data/processed/train_data/train.gzip", compression='gzip')
     target.to_parquet("../../data/processed/train_data/train_target.gzip", compression='gzip')
     logging.info("Fin")
+
+
+def st_main_feature_engineering(flights_path, fuel_path, flights_processed_path, target_path,scaler_model_path, delay_param=10):
+    st.text("Début de la lecture des datasets utilisés pour la phase d'entraînement...")
+    flights = pd.read_parquet(flights_path)
+    fuel = pd.read_parquet(fuel_path)
+    flights, target = build_features(flights, fuel, list_features_to_scale, scaler_model_path, "TRAIN",
+                                     delay_param=delay_param)
+    st.text("Création du jeu d'entraînement ...")
+    flights.to_parquet(flights_processed_path, compression='gzip')
+    target.to_parquet(target_path, compression='gzip')
+    st.text("Fin")
 
 
 if __name__ == '__main__':

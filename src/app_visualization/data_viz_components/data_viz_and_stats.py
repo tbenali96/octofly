@@ -8,7 +8,7 @@ from src.features.feature_engineering import add_delay_binary_target, add_catego
 
 
 def get_vols_dataframe_with_target_defined() -> pd.DataFrame:
-    df_vols = pd.read_parquet(DATA_PATH + "/parquet_format/train_data/vols.gzip")
+    df_vols = pd.read_parquet(DATA_PATH + "/aggregated_data/vols.gzip")
     add_delay_binary_target(df_vols)
     df_vols["CATEGORIE RETARD"] = df_vols["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     return df_vols
