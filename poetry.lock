@@ -190,6 +190,23 @@ optional = false
 python-versions = "~=3.5"
 
 [[package]]
+name = "catboost"
+version = "0.26"
+description = "Catboost Python Package"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+graphviz = "*"
+matplotlib = "*"
+numpy = ">=1.16.0"
+pandas = ">=0.24.0"
+plotly = "*"
+scipy = "*"
+six = "*"
+
+[[package]]
 name = "certifi"
 version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -278,7 +295,7 @@ python-versions = "*"
 name = "cycler"
 version = "0.10.0"
 description = "Composable style cycles"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -402,6 +419,19 @@ python-versions = ">=3.5"
 
 [package.dependencies]
 gitdb = ">=4.0.1,<5"
+
+[[package]]
+name = "graphviz"
+version = "0.16"
+description = "Simple Python interface for Graphviz"
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
+
+[package.extras]
+dev = ["tox (>=3)", "flake8", "pep8-naming", "wheel", "twine"]
+docs = ["sphinx (>=1.8)", "sphinx-rtd-theme"]
+test = ["mock (>=3)", "pytest (>=4)", "pytest-mock (>=2)", "pytest-cov"]
 
 [[package]]
 name = "htmlmin"
@@ -563,7 +593,7 @@ i18n = ["Babel (>=2.7)"]
 name = "joblib"
 version = "1.0.1"
 description = "Lightweight pipelining with Python functions"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -673,9 +703,25 @@ python-versions = ">=3.6"
 name = "kiwisolver"
 version = "1.3.1"
 description = "A fast implementation of the Cassowary constraint solver"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
+
+[[package]]
+name = "lightgbm"
+version = "3.2.1"
+description = "LightGBM Python Package"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+scikit-learn = "!=0.22.0"
+scipy = "*"
+
+[package.extras]
+dask = ["dask[array] (>=2.0.0)", "dask[dataframe] (>=2.0.0)", "dask[distributed] (>=2.0.0)", "pandas"]
 
 [[package]]
 name = "markupsafe"
@@ -689,7 +735,7 @@ python-versions = ">=3.6"
 name = "matplotlib"
 version = "3.4.2"
 description = "Python plotting package"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -921,7 +967,7 @@ test = ["pytest", "coverage", "requests", "nbval", "selenium", "pytest-cov", "re
 name = "numpy"
 version = "1.20.3"
 description = "NumPy is the fundamental package for array computing with Python."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -940,7 +986,7 @@ pyparsing = ">=2.0.2"
 name = "pandas"
 version = "1.2.4"
 description = "Powerful data structures for data analysis, time series, and statistics"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7.1"
 
@@ -1083,7 +1129,7 @@ python-versions = "*"
 name = "pillow"
 version = "8.2.0"
 description = "Python Imaging Library (Fork)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -1091,7 +1137,7 @@ python-versions = ">=3.6"
 name = "plotly"
 version = "4.14.3"
 description = "An open-source, interactive data visualization library for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1255,7 +1301,7 @@ python-versions = ">=3.5"
 name = "pyparsing"
 version = "2.4.7"
 description = "Python parsing module"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -1320,7 +1366,7 @@ termcolor = ">=1.1.0"
 name = "python-dateutil"
 version = "2.8.1"
 description = "Extensions to the standard Python datetime module"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 
@@ -1331,7 +1377,7 @@ six = ">=1.5"
 name = "pytz"
 version = "2021.1"
 description = "World timezone definitions, modern and historical"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1434,7 +1480,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 name = "retrying"
 version = "1.3.3"
 description = "Retrying"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1445,7 +1491,7 @@ six = ">=1.7.0"
 name = "scikit-learn"
 version = "0.24.2"
 description = "A set of python modules for machine learning and data mining"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -1465,7 +1511,7 @@ tests = ["matplotlib (>=2.1.1)", "scikit-image (>=0.13)", "pandas (>=0.25.0)", "
 name = "scipy"
 version = "1.6.1"
 description = "SciPy: Scientific Library for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1498,7 +1544,7 @@ python-versions = "*"
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -1599,7 +1645,7 @@ test = ["pytest", "pathlib2"]
 name = "threadpoolctl"
 version = "2.1.0"
 description = "threadpoolctl"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
@@ -1811,7 +1857,7 @@ notebook = ">=4.4.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ea5cca6e0f947d606e8831fef11aa990048413ab77282035d9da4507c998e82f"
+content-hash = "1d74b3ca2745bf3256f4d722461834fa044fb1d2b5a9b93e39bb88297d4b2ec9"
 
 [metadata.files]
 altair = [
@@ -1899,6 +1945,26 @@ bottleneck = [
 cachetools = [
     {file = "cachetools-4.2.2-py3-none-any.whl", hash = "sha256:2cc0b89715337ab6dbba85b5b50effe2b0c74e035d83ee8ed637cf52f12ae001"},
     {file = "cachetools-4.2.2.tar.gz", hash = "sha256:61b5ed1e22a0924aed1d23b478f37e8d52549ff8a961de2909c69bf950020cff"},
+]
+catboost = [
+    {file = "catboost-0.26-cp27-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:9450fabbe621899fa5bece07cb126d76893cba11e68f443c9c4967558bec4ff3"},
+    {file = "catboost-0.26-cp27-none-manylinux1_x86_64.whl", hash = "sha256:c7f27a009bfc6f4bfa5fb8d6422f96cb87c27becdbf7eccd0218641464a35448"},
+    {file = "catboost-0.26-cp27-none-win_amd64.whl", hash = "sha256:3b427a5598fdba88d7fe0f926f7f89f48711c400a753063b144a74b8e932c54f"},
+    {file = "catboost-0.26-cp35-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:a957b68632ec2995b4a80aed21c24998b38a8d2bf77cbf8e38f7fe3be50dc817"},
+    {file = "catboost-0.26-cp35-none-manylinux1_x86_64.whl", hash = "sha256:5dc2b36fd2b53c0de9dd32aa1b5c048ab63bbacce2d3b36b85fbab90f49f1e91"},
+    {file = "catboost-0.26-cp35-none-win_amd64.whl", hash = "sha256:3390db82e11769ae21a05e2fff9b02045ac9d7fd8592320f92a644ea8c5d3346"},
+    {file = "catboost-0.26-cp36-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:bdefcf5236dd204eaf8bdd2c9f3bf4672ba4839d1d90fdc9a735f311f3058f69"},
+    {file = "catboost-0.26-cp36-none-manylinux1_x86_64.whl", hash = "sha256:f1e7f89f14cae51cf5dc1aef60e1bfe644cfbe3168624de8fa0fd2df2b9f4bd1"},
+    {file = "catboost-0.26-cp36-none-win_amd64.whl", hash = "sha256:101eacb54faac62c93863f752022f6396695424926fe81d4f07eef33a9f86e9d"},
+    {file = "catboost-0.26-cp37-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:f91ffdfe63f6444b0c22c800972249c4a5a9f4773ec5ab8f7aa5b524d9c00e46"},
+    {file = "catboost-0.26-cp37-none-manylinux1_x86_64.whl", hash = "sha256:9b98aea5991d1745ff67f4ba18e7c09951cb69b2e128afd0e5397251c1bb2d91"},
+    {file = "catboost-0.26-cp37-none-win_amd64.whl", hash = "sha256:81c6ac17699105abc56ba55bdec7212946aed93337295d8571b488ce1d745792"},
+    {file = "catboost-0.26-cp38-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:06c38650ba4945b9dfcf2b6ea162faf169b08818d80166d3c287100881641905"},
+    {file = "catboost-0.26-cp38-none-manylinux1_x86_64.whl", hash = "sha256:d11cb570649a45b0c7f2420eb58091b557944dc910f39e0a77cf49da7172a04a"},
+    {file = "catboost-0.26-cp38-none-win_amd64.whl", hash = "sha256:d081af8bdff1f1a5a0fe625c866256941554ab5f14bb1331229f138853371b6d"},
+    {file = "catboost-0.26-cp39-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:c2921e50345eacde3260a5b9801f548bf1b2d3b5b87fddb82c8ddc86b19b49f6"},
+    {file = "catboost-0.26-cp39-none-manylinux1_x86_64.whl", hash = "sha256:534e2d041896546bd069a5ff401f12c6cb6dc22b6456e45220d065f74673bbf7"},
+    {file = "catboost-0.26-cp39-none-win_amd64.whl", hash = "sha256:24571c8aebf86f451ee1ac1371bade36c1e8f3c5020253f229d3265e40e57093"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
@@ -2122,6 +2188,10 @@ gitpython = [
     {file = "GitPython-3.1.17-py3-none-any.whl", hash = "sha256:29fe82050709760081f588dd50ce83504feddbebdc4da6956d02351552b1c135"},
     {file = "GitPython-3.1.17.tar.gz", hash = "sha256:ee24bdc93dce357630764db659edaf6b8d664d4ff5447ccfeedd2dc5c253f41e"},
 ]
+graphviz = [
+    {file = "graphviz-0.16-py2.py3-none-any.whl", hash = "sha256:3cad5517c961090dfc679df6402a57de62d97703e2880a1a46147bb0dc1639eb"},
+    {file = "graphviz-0.16.zip", hash = "sha256:d2d25af1c199cad567ce4806f0449cb74eb30cf451fd7597251e1da099ac6e57"},
+]
 htmlmin = [
     {file = "htmlmin-0.1.12.tar.gz", hash = "sha256:50c1ef4630374a5d723900096a961cff426dff46b48f34d194a81bbe14eca178"},
 ]
@@ -2232,6 +2302,13 @@ kiwisolver = [
     {file = "kiwisolver-1.3.1-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:33449715e0101e4d34f64990352bce4095c8bf13bed1b390773fc0a7295967b3"},
     {file = "kiwisolver-1.3.1-pp36-pypy36_pp73-win32.whl", hash = "sha256:401a2e9afa8588589775fe34fc22d918ae839aaaf0c0e96441c0fdbce6d8ebe6"},
     {file = "kiwisolver-1.3.1.tar.gz", hash = "sha256:950a199911a8d94683a6b10321f9345d5a3a8433ec58b217ace979e18f16e248"},
+]
+lightgbm = [
+    {file = "lightgbm-3.2.1-py3-none-macosx_10_14_x86_64.macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:79719706046faf708d9436cd989e9c61696ceb1c5fbaf1257ae9c2fa7bcff686"},
+    {file = "lightgbm-3.2.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:b4c158f3026cdf5087a047945686a38b6a1e0f761627907fd959cb7afc2743b3"},
+    {file = "lightgbm-3.2.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:95b0f1c8fec232be2995502151f8a168e30e7fd9a8e89d835ca5919820cd9033"},
+    {file = "lightgbm-3.2.1-py3-none-win_amd64.whl", hash = "sha256:0999f69e420281fc450d5ee4559ce0595931750aa377ff1c0228150505ea2bf8"},
+    {file = "lightgbm-3.2.1.tar.gz", hash = "sha256:bd98e3b501b4c24dc127f4ad93e467f42923fe3eefa99e143b5b93158f024395"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.0.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:f9081981fe268bd86831e5c75f7de206ef275defcb82bc70740ae6dc507aee51"},
@@ -2479,6 +2556,7 @@ pillow = [
     {file = "Pillow-8.2.0-pp37-pypy37_pp73-manylinux2010_i686.whl", hash = "sha256:aac00e4bc94d1b7813fe882c28990c1bc2f9d0e1aa765a5f2b516e8a6a16a9e4"},
     {file = "Pillow-8.2.0-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:22fd0f42ad15dfdde6c581347eaa4adb9a6fc4b865f90b23378aa7914895e120"},
     {file = "Pillow-8.2.0-pp37-pypy37_pp73-win32.whl", hash = "sha256:e98eca29a05913e82177b3ba3d198b1728e164869c613d76d0de4bde6768a50e"},
+    {file = "Pillow-8.2.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:8b56553c0345ad6dcb2e9b433ae47d67f95fc23fe28a0bde15a120f25257e291"},
     {file = "Pillow-8.2.0.tar.gz", hash = "sha256:a787ab10d7bb5494e5f76536ac460741788f1fbce851068d73a87ca7c35fc3e1"},
 ]
 plotly = [
