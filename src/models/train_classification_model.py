@@ -6,6 +6,9 @@ import streamlit as st
 
 
 def train_classifier(X: pd.DataFrame, y: pd.DataFrame) -> CatBoostClassifier:
+    """
+    Trains a CatBoostClassifier.
+    """
     y = y[["RETARD"]]
     cat_features = [0, 1, 6, 11, 13, 14, 15, 16]
     model = CatBoostClassifier(iterations=500,

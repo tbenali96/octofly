@@ -4,7 +4,8 @@ import pandas as pd
 import os
 
 def aggregate_data(input_filepath: str, output_filepath: str) -> None:
-    """ Aggregates all the tables from the different batches.
+    """ Aggregates all the data extracted from the different databases
+    and make it ready to be used in the feature engineering process. It is stored in ../aggregated_data.
     """
     if not os.path.exists(output_filepath):
         os.makedirs(output_filepath)

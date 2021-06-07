@@ -12,6 +12,9 @@ SCALERS_MODEL_PATH = os.path.join("../../models/train_features_scalers")
 
 
 def calculate_prediction(x: float, threshold: float) -> int:
+    """
+    Returns a class depending on the value of the threshold.
+    """
     if x <= threshold:
         return 0
     else:
@@ -19,6 +22,9 @@ def calculate_prediction(x: float, threshold: float) -> int:
 
 
 def predict_classifier(X: pd.DataFrame, model_file_name: str, threshold: float=0.2) -> pd.DataFrame:
+    """
+    Predicts a delay or not for each record of the test dataset.
+    """
     model = pickle.load(open(model_file_name, 'rb'))
     preds_proba = model.predict_proba(X)
     predictions = []

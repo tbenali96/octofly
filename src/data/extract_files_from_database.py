@@ -8,8 +8,8 @@ from prefect import task
 
 @task
 def read_database_and_store_in_parquet(input_filepath: str, output_filepath: str):
-    """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../parquet).
+    """ Extracts raw data from the database (../raw) into
+        cleaned data ready to be processed (saved in ../extracted).
     """
     if not os.path.exists(output_filepath):
         os.makedirs(output_filepath)
