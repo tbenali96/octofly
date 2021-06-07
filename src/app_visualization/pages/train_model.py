@@ -7,7 +7,7 @@ from src.models.train_regression_model import st_main_train_regressor_model
 
 def write():
     st.header("Entrainement du modèle")
-    delay_parameter = st.text_input("A partir de combien de minutes un vol est considéré en retard")
+    delay_parameter = st.number_input("A partir de combien de minutes un vol est considéré en retard")
     flights_path = "data/aggregated_data/vols.gzip"
     fuel_path = "data/aggregated_data/prix_fuel.gzip"
     flights_processed_path = "data/processed/train_data/train.gzip"
