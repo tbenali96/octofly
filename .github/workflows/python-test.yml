@@ -25,5 +25,5 @@ jobs:
       - name: run tests
         run: |
           source $HOME/.poetry/env
-          poetry run pytest tests --cov=pyclustertend --cov-fail-under=95
+          poetry run pytest tests --cov=pyclustertend --cov-fail-under=10
           poetry run codecov
