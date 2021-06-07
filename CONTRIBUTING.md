@@ -14,6 +14,8 @@
 
 ## convention of code
 
+- The variables, the functions and the code are in English 
+- The logging messages are in French 
 - PEP8 code formatting
 - type hinting (checked by mypy)
 - if POO, no extra step besides attributes initialization in class constructor
