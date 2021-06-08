@@ -93,13 +93,17 @@ def create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_fea
     # sort airline by number of flight by airline
     number_flight_with_delay_sorted = sort_airport_df_by_number_of_flight(feature, number_flight_with_delay)
     # add total number of flight per airline
-    number_flight_with_delay_sorted['NOMBRE VOLS TOTAL'] = number_flights_sorted
+    add_total_number_of_flight_per_airport(number_flight_with_delay_sorted, number_flights_sorted)
 
     # add total number of flight on time per airline
     add_total_number_of_flight_on_time_per_airline_column(number_flight_with_delay_sorted)
     # Get mean delay per airline
     add_mean_delay_column(number_flight_with_delay_sorted)
     return number_flight_with_delay_sorted
+
+
+def add_total_number_of_flight_per_airport(number_flight_with_delay_sorted: pd.DataFrame, number_flights_sorted: pd.DataFrame):
+    number_flight_with_delay_sorted['NOMBRE VOLS TOTAL'] = number_flights_sorted
 
 
 def add_mean_delay_column(number_flight_with_delay_sorted: pd.DataFrame):
@@ -216,14 +220,10 @@ def get_bar_plot_that_give_the_mean_number_of_delay_given_the_number_of_passager
     df_delay_wrt_nb_of_passengers = df_vols[['NOMBRE DE PASSAGERS', "RETARD"]].copy()
 
     df_delay_wrt_nb_of_passengers['Nombre de vols'] = 1
-    df_delay_wrt_nb_of_passengers = df_delay_wrt_nb_of_passengers[
-        df_delay_wrt_nb_of_passengers['NOMBRE DE PASSAGERS'] > 0].sort_values(by='NOMBRE DE PASSAGERS', ascending=True)
+    df_delay_wrt_nb_of_passengers = sort_values_by_nb_of_passengers(df_delay_wrt_nb_of_passengers)
 
-    df_delay_wrt_nb_of_passengers_gb = df_delay_wrt_nb_of_passengers.groupby(['NOMBRE DE PASSAGERS'],
-                                                                             as_index=False).sum().rename(
-        columns={'RETARD': 'NB RETARD'})
-    df_delay_wrt_nb_of_passengers_gb['RETARD MOYEN'] = df_delay_wrt_nb_of_passengers_gb.apply(
-        lambda x: x['NB RETARD'] / x['Nombre de vols'], axis=1)
+    df_delay_wrt_nb_of_passengers_gb = get_delay_passenger_df_gb_passenger(df_delay_wrt_nb_of_passengers)
+    add_mean_delay_to_df(df_delay_wrt_nb_of_passengers_gb)
 
     fig = px.bar(df_delay_wrt_nb_of_passengers_gb,
                  y='RETARD MOYEN',
@@ -239,7 +239,25 @@ def get_bar_plot_that_give_the_mean_number_of_delay_given_the_number_of_passager
         "Or nous avons vu dans le premier graphe que plus la distance parcourue est courte plus il a de chance que le vol soit en retard.")
 
 
-def get_bar_chart_with_the_delay_type_cumuluated_by_airline(df_vols: pd.DataFrame, time_cumulated: bool = True):
+def add_mean_delay_to_df(df_delay_wrt_nb_of_passengers_gb:pd.DataFrame):
+    df_delay_wrt_nb_of_passengers_gb['RETARD MOYEN'] = df_delay_wrt_nb_of_passengers_gb.apply(
+        lambda x: x['NB RETARD'] / x['Nombre de vols'], axis=1)
+
+
+def get_delay_passenger_df_gb_passenger(df_delay_wrt_nb_of_passengers:pd.DataFrame)->pd.DataFrame:
+    df_delay_wrt_nb_of_passengers_gb = df_delay_wrt_nb_of_passengers.groupby(['NOMBRE DE PASSAGERS'],
+                                                                             as_index=False).sum().rename(
+        columns={'RETARD': 'NB RETARD'})
+    return df_delay_wrt_nb_of_passengers_gb
+
+
+def sort_values_by_nb_of_passengers(df_delay_wrt_nb_of_passengers: pd.DataFrame)->pd.DataFrame:
+    df_delay_wrt_nb_of_passengers = df_delay_wrt_nb_of_passengers[
+        df_delay_wrt_nb_of_passengers['NOMBRE DE PASSAGERS'] > 0].sort_values(by='NOMBRE DE PASSAGERS', ascending=True)
+    return df_delay_wrt_nb_of_passengers
+
+
+def plot_bar_chart_with_the_delay_type_cumuluated_by_airline(df_vols: pd.DataFrame, time_cumulated: bool = True):
     delay_type = ['RETARD SYSTEM', 'RETARD SECURITE',
                   'RETARD COMPAGNIE', 'RETARD AVION', 'RETARD METEO']
     bool_delay_type = ['is_' + delay for delay in delay_type]

@@ -1,5 +1,5 @@
 test:
-	poetry run pytest tests --cov=src  --cov-fail-under=80
+	poetry run pytest tests --cov=src  --cov-fail-under=60
 
 test_syntax:
 	poetry run flake8

@@ -1,3 +1,4 @@
+import random
 from unittest.mock import patch
 
 import pandas as pd
@@ -9,7 +10,10 @@ from src.app_visualization.data_viz_components.data_viz_and_stats import get_vol
     get_pie_chart_that_display_the_category_delay_distribution, get_airport_list_and_their_number_of_flight_sorted, \
     get_index_of_the_arline_sorted_list, create_df_with_number_of_delay_gb_feature, \
     add_the_columns_with_the_airport_index_sorted_list, sort_airport_df_by_number_of_flight, \
-    add_total_number_of_flight_on_time_per_airline_column, add_mean_delay_column
+    add_total_number_of_flight_on_time_per_airline_column, add_mean_delay_column, \
+    create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen, \
+    sort_values_by_nb_of_passengers, get_delay_passenger_df_gb_passenger, add_mean_delay_to_df, \
+    create_nb_of_on_time_flight_and_mean_delay_per_hour_df
 
 TESTED_MODULE = 'src.app_visualization.data_viz_components.data_viz_and_stats'
 
@@ -156,3 +160,72 @@ def test_add_mean_delay_column__compute_the_ratio_between_delay_and_nb_of_flight
     actual = add_mean_delay_column(get_df_vols_with_delay)
     # Then
     assert_frame_equal(get_df_vols_with_delay, expected)
+
+
+def test_sort_values_by_nb_of_passengers__return_df_sorted_by_nb_of_passengers():
+    # Given
+    df_delay_wrt_nb_passenger = pd.DataFrame({'RETARD': [0, 1, 1, 1],
+                                              'NOMBRE DE PASSAGERS': [10, 40, 30, 490],
+                                              })
+    expected = pd.DataFrame({'RETARD': [0, 1, 1, 1],
+                             'NOMBRE DE PASSAGERS': [10, 30, 40, 490],
+                             }, index=[0, 2, 1, 3])
+    # When
+    actual = sort_values_by_nb_of_passengers(df_delay_wrt_nb_passenger)
+    # Then
+    assert_frame_equal(actual, expected)
+
+
+def test_get_delay_passenger_df_gb_passenger_and_rename_column_delay_by_nb_of_delay():
+    # Given
+    df_delay_wrt_nb_passenger = pd.DataFrame({'RETARD': [0, 1, 1, 1],
+                                              'NOMBRE DE PASSAGERS': [490, 40, 40, 490],
+                                              })
+    expected = pd.DataFrame({
+        'NOMBRE DE PASSAGERS': [40, 490],
+        'NB RETARD': [2, 1],
+    })
+    # When
+    actual = get_delay_passenger_df_gb_passenger(df_delay_wrt_nb_passenger)
+    # Then
+    assert_frame_equal(actual, expected)
+
+
+def test_add_mean_delay_to_df__compute_nb_of_delay_divoded_by_nb_of_flight():
+    # Given
+    df_delay_gb_passenger = pd.DataFrame({
+        'NOMBRE DE PASSAGERS': [40, 490],
+        'NB RETARD': [2, 1],
+        'Nombre de vols': [20, 70]
+    })
+    expected = pd.DataFrame({
+        'NOMBRE DE PASSAGERS': [40, 490],
+        'NB RETARD': [2, 1],
+        'Nombre de vols': [20, 70],
+        'RETARD MOYEN': [2 / 20, 1 / 70]
+    })
+    # When
+    add_mean_delay_to_df(df_delay_gb_passenger)
+    # Then
+    assert_frame_equal(df_delay_gb_passenger, expected)
+
+
+@patch(f'{TESTED_MODULE}.convert_time_into_datetime', return_value=15)
+def test_create_nb_of_on_time_flight_and_mean_delay_per_hour_df(m_convert_time):
+    # Given
+    df_delay_gb_passenger = pd.DataFrame({
+        'DEPART PROGRAMME': [150, 150, 158],
+        "RETARD": [0, 1, 1],
+        'NOMBRE DE PASSAGERS': [40, 40, 40]
+    })
+    expected = pd.DataFrame({"HEURE DE DEPART": [15],
+                             "RETARD": [2],
+                             'Nombre de vols': [3],
+                             'NOMBRE DE PASSAGERS': [120],
+                             "RETARD MOYEN": [2 / 3],
+                             "VOL A L'HEURE": [1]})
+    # When
+    actual = create_nb_of_on_time_flight_and_mean_delay_per_hour_df(df_delay_gb_passenger)
+    # Then
+    assert expected["VOL A L'HEURE"].values[0] == actual["VOL A L'HEURE"].values[0]
+    assert expected["RETARD MOYEN"].values[0] == actual["RETARD MOYEN"].values[0]

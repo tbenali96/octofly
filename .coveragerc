@@ -22,5 +22,8 @@ exclude_lines =
     # Don't complain if non-runnable code isn't run:
     if 0:
     if __name__ == .__main__.:
+    plot
+    create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen
+    main
 
 ignore_errors = True
