@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -213,4 +215,4 @@ if __name__ == '__main__':  # pragma: no cover
     class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
     prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
                                                                                     df_aeroports, class_preds)
-    print(prediction_with_cost_gb_airline.columns)
+    logging.Logger('Dataframe with KPIs is created and saved')
