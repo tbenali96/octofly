@@ -202,7 +202,8 @@ def get_prediction_with_all_cost_id_df(reg_preds, df_compagnies, df_aeroports, c
     prediction_with_cost_gb_airline = get_new_turnover_for_each_airline(prediction_with_cost_gb_airline)
     prediction_with_cost_gb_airline = get_percentage_of_lost_sales(prediction_with_cost_gb_airline)
     prediction_with_cost_gb_airline = get_percentage_of_delay_by_company(prediction_with_cost_gb_airline, class_preds)
-    return reg_preds, prediction_with_cost_gb_airline
+    prediction_with_cost_gb_airline.to_csv('../prediction_with_cost_kpi.csv', index=False)
+    return prediction_with_cost_gb_airline
 
 
 if __name__ == '__main__':  # pragma: no cover
@@ -210,9 +211,6 @@ if __name__ == '__main__':  # pragma: no cover
     df_compagnies = pd.read_parquet("../../../data/aggregated_data/compagnies.gzip")
     df_aeroports = pd.read_parquet("../../../data/aggregated_data/aeroports.gzip")
     class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
-    reg_preds, prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
+    prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
                                                                                     df_aeroports, class_preds)
     print(prediction_with_cost_gb_airline.columns)
-    plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline)
-    plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline)
-    plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline)
