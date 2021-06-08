@@ -356,4 +356,4 @@ def test_get_prediction_with_all_cost_id_df__apply_all_the_function_in_right_ord
     m_total_paid.assert_any_call(m_cost_delay.return_value)
     m_new_turnover.assert_any_call(m_total_paid.return_value)
     m_percentage_lost.assert_any_call(m_new_turnover.return_value)
-    m_perc.assert_any_call(m_percentage_lost.return_value, class_preds)
+    m_perc.assert_any_call(m_percentage_lost.return_value,class_preds)

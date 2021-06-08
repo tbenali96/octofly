@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -8,13 +10,25 @@ from src.features.feature_engineering import add_delay_binary_target, add_catego
 
 
 def get_vols_dataframe_with_target_defined() -> pd.DataFrame:
+    """
+    Load the vols dataset, add the binary target (delay or not) and the type of delay :
+    - 0 : no delay
+    - 1 : delay <=3H
+    - 2 : delay > 3h
+
+    :return: vols dataframe with the binary target and the categorical delay columns
+    """
     df_vols = pd.read_parquet(DATA_PATH + "/aggregated_data/vols.gzip")
     add_delay_binary_target(df_vols)
     df_vols["CATEGORIE RETARD"] = df_vols["RETARD A L'ARRIVEE"].apply(lambda x: add_categorical_delay_target(x))
     return df_vols
 
 
-def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):
+def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):  # pragma: no cover
+    """
+    Display the distribution of arrival delays in relation to the distance traveled by the aircraft using points\n
+    :param df_vols: dataset of all the information relative to the flights
+    """
     df_vols_avec_retard = df_vols[df_vols["RETARD A L'ARRIVEE"] > 0].reset_index(drop=True)
     fig = px.scatter(df_vols_avec_retard, x="DISTANCE", y="RETARD A L'ARRIVEE",
                      title="Répartition des vols en retard par rapport à la distance parcourue")
@@ -22,6 +36,10 @@ def get_scatter_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):
 
 
 def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFrame):
+    """
+    Display the distribution of arrival delays in relation to the distance traveled by the aircraft using bins\n
+    :param df_vols: dataset of all the information relative to the flights
+    """
     df_vols_avec_retard = df_vols[df_vols["RETARD A L'ARRIVEE"] > 0].reset_index(drop=True)
     df_vols_avec_retard['RETARD PAR CATEGORIE'] = df_vols_avec_retard['CATEGORIE RETARD'].map(
         lambda x: "retard <= 3h" if x == 1 else "retard > 3h")
@@ -34,6 +52,10 @@ def get_histogram_nbins100_plot_delay_at_arrival_wrt_distance(df_vols: pd.DataFr
 
 
 def get_pie_chart_that_display_the_category_delay_distribution(df_vols: pd.DataFrame):
+    """
+    display the distribution of the different types of delays on a pie chart (delay >3h, no delay or delay <=3h)\n
+    :param df_vols: dataset of all the information relative to the flights
+    """
     df_vols_avec_retard_wth_count = df_vols[['CATEGORIE RETARD']]
     df_vols_avec_retard_wth_count['count'] = 1
     df_vols_avec_retard_wth_count_gb = df_vols_avec_retard_wth_count.groupby(['CATEGORIE RETARD'], as_index=False).sum()
@@ -46,37 +68,108 @@ def get_pie_chart_that_display_the_category_delay_distribution(df_vols: pd.DataF
 
 def create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen(
         df_vols: pd.DataFrame, feature: str = "AEROPORT DEPART") -> pd.DataFrame:
-    # Get airline list and their number of flight sorted
-    airport_sorted_by_nb_of_flights = list(df_vols[feature].value_counts().index)
-    number_flights_sorted = list(df_vols[feature].value_counts().values)
+    """
+    This function retrieves the list of all airports (departure or arrival), the list of the number of flights per
+    airport sorted in descending order. Aggregates data by doing a groupby on the arrival airport feature and summing the number
+    of delayed flights per airport. So we have a dataframe, sorted in descending order of the number of flights,
+    the number of delays per airport. We add the average number of delays per airport and the number of flights on time
+
+    :param df_vols: dataset of all the information relative to the flights
+
+    :return: the dataframe groupby feature (Aeroport départ) with the number of delay flight per airport, on time and
+    the mean number of delay.
+    """
+    # Get airport list and their number of flight sorted
+    airport_sorted_by_nb_of_flights, number_flights_sorted = get_airport_list_and_their_number_of_flight_sorted(df_vols,
+                                                                                                                feature)
 
     # Create index to sort wrt the airline sorted list
-    sorterIndex = dict(zip(airport_sorted_by_nb_of_flights, range(len(airport_sorted_by_nb_of_flights))))
+    sorterIndex = get_index_of_the_arline_sorted_list(airport_sorted_by_nb_of_flights)
 
     # count number of delay flight per airline
-    number_flight_with_delay = df_vols[['RETARD', feature]] \
-        .groupby([feature], as_index=False) \
-        .sum()
-    number_flight_with_delay[f'{feature} SORTED'] = number_flight_with_delay[feature] \
-        .map(sorterIndex)
+    number_flight_with_delay = create_df_with_number_of_delay_gb_feature(df_vols, feature)
+    add_the_columns_with_the_airport_index_sorted_list(feature, number_flight_with_delay, sorterIndex)
 
     # sort airline by number of flight by airline
-    number_flight_with_delay_sorted = number_flight_with_delay \
-        .sort_values(by=f'{feature} SORTED', ascending=True) \
-        .drop([f'{feature} SORTED'], axis=1)
+    number_flight_with_delay_sorted = sort_airport_df_by_number_of_flight(feature, number_flight_with_delay)
     # add total number of flight per airline
     number_flight_with_delay_sorted['NOMBRE VOLS TOTAL'] = number_flights_sorted
 
     # add total number of flight on time per airline
-    number_flight_with_delay_sorted["VOL A l'HEURE"] = number_flight_with_delay_sorted \
-        .apply(lambda x: x['NOMBRE VOLS TOTAL'] - x['RETARD'], axis=1)
+    add_total_number_of_flight_on_time_per_airline_column(number_flight_with_delay_sorted)
     # Get mean delay per airline
-    number_flight_with_delay_sorted['RETARD MOYEN'] = number_flight_with_delay_sorted \
-        .apply(lambda x: x['RETARD'] / x['NOMBRE VOLS TOTAL'], axis=1)
+    add_mean_delay_column(number_flight_with_delay_sorted)
     return number_flight_with_delay_sorted
 
 
-def plot_bar_of_number_of_delay_and_on_time_flight_per_airline(df_vols: pd.DataFrame):
+def add_mean_delay_column(number_flight_with_delay_sorted: pd.DataFrame):
+    number_flight_with_delay_sorted['RETARD MOYEN'] = number_flight_with_delay_sorted \
+        .apply(lambda x: x['RETARD'] / x['NOMBRE VOLS TOTAL'], axis=1)
+
+
+def add_total_number_of_flight_on_time_per_airline_column(number_flight_with_delay_sorted: pd.DataFrame):
+    number_flight_with_delay_sorted["VOL A l'HEURE"] = number_flight_with_delay_sorted \
+        .apply(lambda x: x['NOMBRE VOLS TOTAL'] - x['RETARD'], axis=1)
+
+
+def sort_airport_df_by_number_of_flight(feature: str, number_flight_with_delay: pd.DataFrame) -> pd.DataFrame:
+    number_flight_with_delay_sorted = number_flight_with_delay \
+        .sort_values(by=f'{feature} SORTED', ascending=True) \
+        .drop([f'{feature} SORTED'], axis=1)
+    return number_flight_with_delay_sorted
+
+
+def add_the_columns_with_the_airport_index_sorted_list(feature: str, number_flight_with_delay: pd.DataFrame,
+                                                       sorterIndex: Dict):
+    """
+    Add the column of index for each airport to keep the order of the airport sorted by number of flight\n
+    :param feature: AEROPORT ARRIVEE \n
+    :param number_flight_with_delay: dataframe with airport and the number of delay by airport\n
+    :param sorterIndex: List of index that give the order to range the list of airport by their number of flight.
+    """
+    number_flight_with_delay[f'{feature} SORTED'] = number_flight_with_delay[feature] \
+        .map(sorterIndex)
+
+
+def create_df_with_number_of_delay_gb_feature(df_vols: pd.DataFrame, feature: str) -> pd.DataFrame:
+    """
+    Groupby feature (here is airport) and sum on the delay to get the number of delay flight by airport\n
+    :param df_vols:dataset of all the information relative to the flights\n
+    :param feature: columns in the df_vols dataframe (here we use the feature : AEROPORT ARRIVEE)\n
+    :return: Dataframe groupby AEROPORT ARRIVEE and have a column with the number of flight per airport
+    """
+    number_flight_with_delay = df_vols[['RETARD', feature]] \
+        .groupby([feature], as_index=False) \
+        .sum()
+    return number_flight_with_delay
+
+
+def get_index_of_the_arline_sorted_list(airport_sorted_by_nb_of_flights: List[str]) -> Dict:
+    """
+    Create a dictionnary of the flight arranged in alphabetical order with their index as value to keep the right order
+     of the airport sorted by number of flight.\n
+    :param airport_sorted_by_nb_of_flights: list of airport sorted by number of flight\n
+    :return:a dictionnary of the airport with their index as value to keep the right order
+    """
+    sorterIndex = dict(zip(airport_sorted_by_nb_of_flights, range(len(airport_sorted_by_nb_of_flights))))
+    return sorterIndex
+
+
+def get_airport_list_and_their_number_of_flight_sorted(df_vols: pd.DataFrame, feature: str) -> (List[str], List[int]):
+    """
+    Retrieves the list of airports in descending order of number of flights  and the corresponding list of number of flights
+
+    :param df_vols: dataset of all the information relative to the flights\n
+    :param feature: a column value of the dataset df_vols (here is AEROPORT ARRIVE)\n
+
+    :return: list of airport sorted by number of flight and the number of flight list
+    """
+    airport_sorted_by_nb_of_flights = list(df_vols[feature].value_counts().index)
+    number_flights_sorted = list(df_vols[feature].value_counts().values)
+    return airport_sorted_by_nb_of_flights, number_flights_sorted
+
+
+def plot_bar_of_number_of_delay_and_on_time_flight_per_airline(df_vols: pd.DataFrame):  # pragma: no cover
     df_processed = create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen(df_vols,
                                                                                                            feature='COMPAGNIE AERIENNE')
     plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed,
@@ -85,7 +178,7 @@ def plot_bar_of_number_of_delay_and_on_time_flight_per_airline(df_vols: pd.DataF
         "Les Compagnies qui ont le plus de vols en retard sont celles qui ont le moins de vols au total")
 
 
-def plot_bar_of_number_of_delay_and_on_time_flight_per_airport_of_departure(df_vols: pd.DataFrame):
+def plot_bar_of_number_of_delay_and_on_time_flight_per_airport_of_departure(df_vols: pd.DataFrame):  # pragma: no cover
     df_processed = create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen(df_vols,
                                                                                                            feature='AEROPORT DEPART')
     plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed,
@@ -96,7 +189,7 @@ def plot_bar_of_number_of_delay_and_on_time_flight_per_airport_of_departure(df_v
         "que les aéroport qui ont beaucoup de vols (ceux tout à gauche)")
 
 
-def plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols: pd.DataFrame):
+def plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols: pd.DataFrame):  # pragma: no cover
     df_processed = create_dataframe_to_plot_the_number_of_delay_sorted_per_nb_of_flight_per_feature_chosen(df_vols,
                                                                                                            feature='AEROPORT ARRIVEE')
     plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed,
@@ -108,7 +201,7 @@ def plot_bar_of_number_of_delay_and_on_time_flight_per_arrival_airport(df_vols: 
 
 
 def plot_two_graphs_one_with_nb_of_flight_the_second_with_the_delay_and_on_time_repartition(df_processed: pd.DataFrame,
-                                                                                            feature: str = 'AEROPORT ARRIVEE'):
+                                                                                            feature: str = 'AEROPORT ARRIVEE'):  # pragma: no cover
     fig1 = px.bar(df_processed, x=feature, y=["VOL A l'HEURE", 'RETARD'],
                   title=f"Repartition des vols à l'heure et des vols en retard par {feature}")
     fig2 = px.bar(df_processed,
@@ -168,7 +261,7 @@ def get_bar_chart_with_the_delay_type_cumuluated_by_airline(df_vols: pd.DataFram
         st.plotly_chart(fig)
 
 
-def plot_mean_delay_wrt_hour_of_departure(df_vols: pd.DataFrame):
+def plot_mean_delay_wrt_hour_of_departure(df_vols: pd.DataFrame):  # pragma: no cover
     df_vols_delay_wrt_hour_gb = create_nb_of_on_time_flight_and_mean_delay_per_hour_df(df_vols)
     fig = px.bar(df_vols_delay_wrt_hour_gb,
                  y='RETARD MOYEN',
@@ -179,7 +272,7 @@ def plot_mean_delay_wrt_hour_of_departure(df_vols: pd.DataFrame):
                 "On aurait moins de chance d'avoir du retard si le départ était programmé dans cette tranche horraire")
 
 
-def plot_number_of_flights_wrt_hour_of_departure(df_vols: pd.DataFrame):
+def plot_number_of_flights_wrt_hour_of_departure(df_vols: pd.DataFrame):  # pragma: no cover
     df_vols_delay_wrt_hour_gb = create_nb_of_on_time_flight_and_mean_delay_per_hour_df(df_vols)
     fig = px.bar(df_vols_delay_wrt_hour_gb,
                  y='Nombre de vols',
@@ -203,7 +296,7 @@ def create_nb_of_on_time_flight_and_mean_delay_per_hour_df(df_vols_raw):
     return df_vols_delay_wrt_hour_gb
 
 
-def plot_number_of_delay_and_on_time_flight_wrt_the_night_flight(df_vols: pd.DataFrame):
+def plot_number_of_delay_and_on_time_flight_wrt_the_night_flight(df_vols: pd.DataFrame):  # pragma: no cover
     df_vols_delay_wrt_hour_gb = create_mean_delay_and_nb_of_flights_df_wrt_night_flights(df_vols)
     df_vols_delay_wrt_hour_gb["VOL A L'HEURE"] = df_vols_delay_wrt_hour_gb.apply(
         lambda x: x['Nombre de vols'] - x['RETARD'], axis=1)
@@ -236,7 +329,7 @@ def create_mean_delay_and_nb_of_flights_df_wrt_night_flights(df_vols):
     return df_vols_delay_wrt_hour_gb
 
 
-def plot_mean_delay_wrt_month_of_departure(df_vols: pd.DataFrame):
+def plot_mean_delay_wrt_month_of_departure(df_vols: pd.DataFrame):  # pragma: no cover
     df_vols['MONTH'] = df_vols['DATE'].dt.month
     df_vols_delay_wrt_hour = df_vols[["MONTH", "RETARD"]].copy()
     df_vols_delay_wrt_hour['Nombre de vols'] = 1
@@ -254,7 +347,7 @@ def plot_mean_delay_wrt_month_of_departure(df_vols: pd.DataFrame):
 
 
 def get_df_to_plot_the_airport_mapping_wrt_delay(df_vols: pd.DataFrame) -> pd.DataFrame:
-    df_aeroports = pd.read_parquet(DATA_PATH + "/parquet_format/train_data/aeroports.gzip")
+    df_aeroports = pd.read_parquet(DATA_PATH + "/aggregated_data/aeroports.gzip")
     delays_by_airport = df_vols[['AEROPORT ARRIVEE', "RETARD A L'ARRIVEE"]]
     delays_by_airport['NB VOLS'] = 1
 
@@ -278,7 +371,8 @@ def get_df_to_plot_the_airport_mapping_wrt_delay(df_vols: pd.DataFrame) -> pd.Da
     return delays_by_airport_iso_alpha_gb
 
 
-def plot_mapping_size_of_airport_wrt_their_delay_and_nb_of_flight(df_vols: pd.DataFrame, scale: int = 300):
+def plot_mapping_size_of_airport_wrt_their_delay_and_nb_of_flight(df_vols: pd.DataFrame,
+                                                                  scale: int = 300):  # pragma: no cover
     scale = scale
     delays_by_airport_iso_alpha_gb = get_df_to_plot_the_airport_mapping_wrt_delay(df_vols)
     delays_by_airport_iso_alpha_gb['text_nb_retard'] = delays_by_airport_iso_alpha_gb.apply(
