@@ -204,7 +204,6 @@ def get_prediction_with_all_cost_id_df(reg_preds, df_compagnies, df_aeroports, c
     prediction_with_cost_gb_airline = get_new_turnover_for_each_airline(prediction_with_cost_gb_airline)
     prediction_with_cost_gb_airline = get_percentage_of_lost_sales(prediction_with_cost_gb_airline)
     prediction_with_cost_gb_airline = get_percentage_of_delay_by_company(prediction_with_cost_gb_airline, class_preds)
-    prediction_with_cost_gb_airline.to_csv('../prediction_with_cost_kpi.csv', index=False)
     return prediction_with_cost_gb_airline
 
 
@@ -215,4 +214,5 @@ if __name__ == '__main__':  # pragma: no cover
     class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
     prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
                                                                                     df_aeroports, class_preds)
+    prediction_with_cost_gb_airline.to_csv('../prediction_with_cost_kpi.csv', index=False)
     logging.Logger('Dataframe with KPIs is created and saved')
