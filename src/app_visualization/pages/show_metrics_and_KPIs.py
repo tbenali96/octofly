@@ -11,23 +11,40 @@ from src.app_visualization.data_viz_components.metrics_and_KPIs import get_predi
 def write():
     st.header("Interprétation métriques et KPIs")
     add_selectbox = st.sidebar.selectbox(
-        "How would you like to receive the results and KPIs?",
-        ("Email", "Home phone", "Mobile phone")
+        "Comment souhaitez-vous recevoir les résultats ?",
+        ("Email", "SMS")
     )
+    if add_selectbox == "SMS":
+        phone_number = st.sidebar.text_input("Entrez votre numéro de téléphone")
+        if phone_number:
+            st.sidebar.markdown(f"Merci un {add_selectbox} vous sera envoyé")
+    elif add_selectbox == "Email":
+        email = st.sidebar.text_input("Entrez votre email")
+        if email:
+            st.sidebar.markdown(f"Merci un {add_selectbox} vous sera envoyé")
+
     st.subheader("Tableau présentant les coûts des retards pour chaque compagnies")
-    reg_preds = pd.read_parquet("data/predictions/predictions_regression.gzip")
-    df_compagnies = pd.read_parquet("data/aggregated_data/compagnies.gzip")
-    df_aeroports = pd.read_parquet("data/aggregated_data/aeroports.gzip")
-    class_preds = pd.read_parquet("data/predictions/predictions_classification.gzip")
-    reg_preds, prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
-                                                                                    df_aeroports, class_preds)
-    st.dataframe(prediction_with_cost_gb_airline)
-    st.subheader("1. Le prix du retard à payer aux aéroports: nos Hypothses")
+    if st.button("Besoin de recalculer les KPIs (s'il y a eu réentrainement du modèle)"):
+        reg_preds = pd.read_parquet("data/predictions/predictions_regression.gzip")
+        df_compagnies = pd.read_parquet("data/aggregated_data/compagnies.gzip")
+        df_aeroports = pd.read_parquet("data/aggregated_data/aeroports.gzip")
+        class_preds = pd.read_parquet("data/predictions/predictions_classification.gzip")
+        prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
+                                                                             df_aeroports, class_preds)
+        prediction_with_cost_gb_airline.to_csv('src/app_visualization/prediction_with_cost_kpi.csv', index=False)
+        st.dataframe(prediction_with_cost_gb_airline)
+    if st.button("Afficher les prédictions avec les KPI"):
+        prediction_with_cost_gb_airline = pd.read_csv('src/app_visualization/prediction_with_cost_kpi.csv')
+        st.dataframe(prediction_with_cost_gb_airline)
+
+    prediction_with_cost_gb_airline = pd.read_csv('src/app_visualization/prediction_with_cost_kpi.csv')
+    st.subheader("Interprétation et Hypothèses")
+    st.subheader("1. Le prix du retard à payer aux aéroports")
     st.markdown(
         "- après 10min : la compagnie paye toutes les minutes le prix indiqué dans la colonne 'PRIS RETARD POUR CHAQUE MINUTE APRES 10 MINUTES'" \
         "- après 20min : la compagnie paye un supplément qui est le prix indiqué dans la colonne 'PRIX RETARD PREMIERE 20 MINUTES'")
 
-    st.subheader("2. Indemnisation des clients : nos Hypothses")
+    st.subheader("2. Indemnisation des clients ")
     st.markdown("- 10% des clients vont demander à être indemnisé pour un retard compris entre 10min et 45min"
                 "   - Indemnité à payer : 1/4 du prix du billet"
                 "- 20% des clients vont demander à être indemnisé pour un retard supérieur à 1h"
@@ -36,7 +53,7 @@ def write():
                 "   - Indemnité à payer : totalité du prix du billet"
                 "On fait l'hypothèse d'un prix maximal fixe du billet : 300€")
 
-    st.subheader("3. Perte de client (taux d'attrition) : nos Hypothses")
+    st.subheader("3. Perte de client (taux d'attrition) ")
     st.markdown("On fait l'hypothèse d'un taux d'attrition à 3% pour un retard de plus de 3h"
                 "Donc pour connaitre le cout d'une perte de client du aux retard : \n"
                 "On suppose qu'un client prend en moyenne 3 fois l'avion par an avec la même compagnie "
@@ -50,6 +67,5 @@ def write():
     if st.button("Afficher la répartition du total à payer et du chiffre d'affaire restant"):
         plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline)
 
-
-if __name__ == "__main__":
-    write()
+    if __name__ == "__main__":
+        write()
