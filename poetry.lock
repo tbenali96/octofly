@@ -190,23 +190,6 @@ optional = false
 python-versions = "~=3.5"
 
 [[package]]
-name = "catboost"
-version = "0.26"
-description = "Catboost Python Package"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-graphviz = "*"
-matplotlib = "*"
-numpy = ">=1.16.0"
-pandas = ">=0.24.0"
-plotly = "*"
-scipy = "*"
-six = "*"
-
-[[package]]
 name = "certifi"
 version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
