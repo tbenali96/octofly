@@ -160,6 +160,22 @@ def plot_turnover_of_airlines_and_the_total_to_be_paid(
 
 
 @pytest.mark.skip(reason="no need to test this function")
+def plot_turnover_of_airlines_and_the_different_cost_to_be_paid(
+        prediction_with_cost_gb_airline: pd.DataFrame):  # pragma: no cover
+    prediction_with_cost_gb_airline = prediction_with_cost_gb_airline.rename(
+        columns={"INDEMNITES A PAYER": "INDEMNITES A PAYER AUX CLIENTS",
+                 "COUT DU RETARD": "COUT DU RETARD (AEROPORTS)"})
+    fig = px.bar(prediction_with_cost_gb_airline,
+                 x="COMPAGNIE AERIENNE",
+                 y=["CHIFFRE D AFFAIRE", "TOTAL A PAYER", "INDEMNITES A PAYER AUX CLIENTS",
+                    "COUT DU RETARD (AEROPORTS)",
+                    "COUT DES CLIENTS PERDUS"],
+                 barmode='group',
+                 title="Repartition du Chiffre d'affaire et cout total du retard par Compagnie")
+    st.plotly_chart(fig)
+
+
+@pytest.mark.skip(reason="no need to test this function")
 def plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline: pd.DataFrame):  # pragma: no cover
     fig = px.bar(prediction_with_cost_gb_airline,
                  x="COMPAGNIE AERIENNE",
@@ -176,8 +192,23 @@ def plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline): 
         values = [prediction_with_cost_gb_airline.iloc[idx]["NV CHIFFRE D'AFFAIRE"],
                   prediction_with_cost_gb_airline.iloc[idx]["TOTAL A PAYER"]]
 
-        fig = go.Figure(data=[go.Pie(labels=labels, values=values, pull=[0, 0, 0.2, 0])])
-        fig.update_traces(hole=.4, hoverinfo="label+percent+name")
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, pull=[0, 0.2])])
+        fig.update_layout(title_text=company)
+        st.plotly_chart(fig)
+
+
+@pytest.mark.skip(reason="no need to test this function")
+def plot_breakdown_all_different_payables_and_turnover(prediction_with_cost_gb_airline):  # pragma: no cover
+    for idx, company in enumerate(prediction_with_cost_gb_airline["COMPAGNIE AERIENNE"]):
+        labels = ["NV CHIFFRE D'AFFAIRE", "INDEMNITES A PAYER AUX CLIENTS", "COUT DES CLIENTS PERDUS",
+                  "COUT DU RETARD (AEROPORTS)"
+                  ]
+        values = [prediction_with_cost_gb_airline.iloc[idx]["NV CHIFFRE D'AFFAIRE"],
+                  prediction_with_cost_gb_airline.iloc[idx]["INDEMNITES A PAYER"],
+                  prediction_with_cost_gb_airline.iloc[idx]["COUT DES CLIENTS PERDUS"],
+                  prediction_with_cost_gb_airline.iloc[idx]["COUT DU RETARD"]]
+
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, pull=[0, 0.2, 0.2, 0.2])])
         fig.update_layout(title_text=company)
         st.plotly_chart(fig)
 
@@ -213,6 +244,6 @@ if __name__ == '__main__':  # pragma: no cover
     df_aeroports = pd.read_parquet("../../../data/aggregated_data/aeroports.gzip")
     class_preds = pd.read_parquet("../../../data/predictions/predictions_classification.gzip")
     prediction_with_cost_gb_airline = get_prediction_with_all_cost_id_df(reg_preds, df_compagnies,
-                                                                                    df_aeroports, class_preds)
+                                                                         df_aeroports, class_preds)
     prediction_with_cost_gb_airline.to_csv('../prediction_with_cost_kpi.csv', index=False)
     logging.Logger('Dataframe with KPIs is created and saved')

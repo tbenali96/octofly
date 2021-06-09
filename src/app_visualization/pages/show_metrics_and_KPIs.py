@@ -5,7 +5,8 @@ import streamlit as st
 
 from src.app_visualization.data_viz_components.metrics_and_KPIs import get_prediction_with_all_cost_id_df, \
     plot_turnover_of_airlines_and_the_total_to_be_paid, plot_former_turnover_of_airlines_and_the_new_one, \
-    plot_breakdown_total_payable_and_turnover
+    plot_breakdown_total_payable_and_turnover, plot_breakdown_all_different_payables_and_turnover, \
+    plot_turnover_of_airlines_and_the_different_cost_to_be_paid
 
 
 def write():
@@ -62,10 +63,14 @@ def write():
                 "On suppose le prix du billet à 300€ par défaut")
     if st.button("Afficher le total à payer et le chiffre d'affaire par compagnie"):
         plot_turnover_of_airlines_and_the_total_to_be_paid(prediction_with_cost_gb_airline)
+    if st.button("Afficher le détail du total à payer et le chiffre d'affaire par compagnie"):
+        plot_turnover_of_airlines_and_the_different_cost_to_be_paid(prediction_with_cost_gb_airline)
     if st.button("Afficher le nouveau chiffre d'affaire et l'ancien chiffre d'affaire par compagnie"):
         plot_former_turnover_of_airlines_and_the_new_one(prediction_with_cost_gb_airline)
     if st.button("Afficher la répartition du total à payer et du chiffre d'affaire restant"):
         plot_breakdown_total_payable_and_turnover(prediction_with_cost_gb_airline)
+    if st.button("Afficher la répartition des différents cout à payer par compagnie et du chiffre d'affaire restant"):
+        plot_breakdown_all_different_payables_and_turnover(prediction_with_cost_gb_airline)
 
     if __name__ == "__main__":
         write()
