@@ -7,7 +7,6 @@ authors = ["Lea Nacccache <lea.naccache@octo.com>, Taha Yassine Ben Ali <baty@oc
 [tool.poetry.dependencies]
 python = "^3.8"
 codecov = "^2.1.11"
-catboost = "^0.26"
 lightgbm = "^3.2.1"
 prefect = "^0.14.21"
 
