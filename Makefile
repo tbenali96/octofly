@@ -17,9 +17,10 @@ start-prefect-server:
 
 start-prefect-agent:
 	prefect agent start
-	sleep 45
-	prefect create project "OCTOFLY"
-	python orchestrate.py
+
+start-prefect-project:
+	prefect create project "OCTOFLY" -d
+	python orchestrate.py -d
 
 
 .PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
