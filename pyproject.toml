@@ -10,6 +10,7 @@ codecov = "^2.1.11"
 prefect = "^0.14.21"
 lightgbm = "^3.2.1"
 catboost = "^0.26"
+git-lfs = "^1.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
